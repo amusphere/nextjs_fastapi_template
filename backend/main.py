@@ -1,5 +1,4 @@
-from app.routers.api.health import router as health_router
-from app.routers.api.users import router as users_router
+from app.routers.routers import api_router
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,5 +21,4 @@ app.add_middleware(
 )
 
 # ルーターの登録
-app.include_router(health_router, prefix="/api", tags=["api"])
-app.include_router(users_router, prefix="/api", tags=["api"])
+app.include_router(api_router, prefix="/api", tags=["api"])

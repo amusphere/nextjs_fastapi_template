@@ -235,7 +235,7 @@ standard = [
 ]
 
 [[package]]
-name = "NextJS_FastAPI_Template"
+name = "fastapi-backend"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
