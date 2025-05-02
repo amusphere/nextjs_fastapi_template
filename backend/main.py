@@ -21,4 +21,4 @@ app.add_middleware(
 )
 
 # ルーターの登録
-app.include_router(api_router, prefix="/api", tags=["api"])
+app.include_router(api_router)

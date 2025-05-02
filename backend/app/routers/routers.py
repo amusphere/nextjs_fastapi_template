@@ -4,5 +4,5 @@ from fastapi import APIRouter
 
 api_router = APIRouter()
 
-api_router.include_router(health_router)
-api_router.include_router(users_router)
+api_router.include_router(health_router, prefix="/api", tags=["api"])
+api_router.include_router(users_router, prefix="/api", tags=["api"])
