@@ -48,7 +48,7 @@ docker compose up
 To run database migrations, use the following command:
 
 ```bash
-docker compose exec backend alembic upgrade head
+docker compose run --rm backend alembic upgrade head
 ```
 
 ### Checking in Browser
@@ -128,16 +128,16 @@ Frontend/
 1. Add a new table or modify an existing table in the `schema.py` file.
 2. Create a new migration file using Alembic:
    ```bash
-   docker compose exec backend alembic revision --autogenerate -m "migration_name"
+   docker compose run --rm backend alembic revision --autogenerate -m "migration_name"
    ```
 3. Check the generated migration file in the `migrations/versions/` directory and make any necessary adjustments.
 4. Apply the migration:
    ```bash
-   docker compose exec backend alembic upgrade head
+   docker compose run --rm backend alembic upgrade head
    ```
 5. If you want to downgrade the migration, use the following command:
    ```bash
-   docker compose exec backend alembic downgrade -1
+   docker compose run --rm backend alembic downgrade -1
    ```
 
 ### Create new page (Frontend)
