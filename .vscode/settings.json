@@ -1,0 +1,26 @@
+{
+    "cSpell.words": [
+        "analyse",
+        "apexcharts",
+        "apikey",
+        "datareader",
+        "nextjs",
+        "NIXPACKS",
+        "outputsize",
+        "plotly",
+        "pyproject",
+        "rakuten",
+        "shadcn",
+        "sjis",
+        "sonner",
+        "stooq",
+        "twelvedata",
+        "webui"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/backend"
+    ],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/backend"
+    ]
+}

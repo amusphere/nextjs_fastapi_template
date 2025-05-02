@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: development
+      TZ: "Asia/Tokyo"
+    volumes:
+      - database:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: uv run fastapi dev --host 0.0.0.0
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/development
+      FRONTEND_URL: http://localhost:3000
+    volumes:
+        - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    command: npm run dev
+    environment:
+      API_BASE_URL: http://backend:8000/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  database: {}
