@@ -4,4 +4,5 @@ from pydantic import BaseModel
 
 class UserModel(BaseModel):
     uuid: UUID
-    clerk_sub: str
+    email: str
+    name: str | None = None

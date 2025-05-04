@@ -216,6 +216,35 @@ standard = [
 ]
 
 [[package]]
+name = "fastapi-backend"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "alembic" },
+    { name = "clerk-backend-api" },
+    { name = "dotenv" },
+    { name = "fastapi", extra = ["standard"] },
+    { name = "psycopg2-binary" },
+    { name = "python-multipart" },
+    { name = "setuptools" },
+    { name = "sqlmodel" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alembic", specifier = ">=1.15.2" },
+    { name = "clerk-backend-api", specifier = ">=2.0.2" },
+    { name = "dotenv", specifier = ">=0.9.9" },
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12" },
+    { name = "psycopg2-binary", specifier = ">=2.9.10" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
+    { name = "setuptools", specifier = ">=79.0.0" },
+    { name = "sqlmodel", specifier = ">=0.0.24" },
+    { name = "uvicorn", specifier = ">=0.34.0" },
+]
+
+[[package]]
 name = "fastapi-cli"
 version = "0.0.7"
 source = { registry = "https://pypi.org/simple" }
@@ -232,33 +261,6 @@ wheels = [
 [package.optional-dependencies]
 standard = [
     { name = "uvicorn", extra = ["standard"] },
-]
-
-[[package]]
-name = "fastapi-backend"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "alembic" },
-    { name = "clerk-backend-api" },
-    { name = "dotenv" },
-    { name = "fastapi", extra = ["standard"] },
-    { name = "psycopg2-binary" },
-    { name = "setuptools" },
-    { name = "sqlmodel" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "alembic", specifier = ">=1.15.2" },
-    { name = "clerk-backend-api", specifier = ">=2.0.2" },
-    { name = "dotenv", specifier = ">=0.9.9" },
-    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12" },
-    { name = "psycopg2-binary", specifier = ">=2.9.10" },
-    { name = "setuptools", specifier = ">=79.0.0" },
-    { name = "sqlmodel", specifier = ">=0.0.24" },
-    { name = "uvicorn", specifier = ">=0.34.0" },
 ]
 
 [[package]]

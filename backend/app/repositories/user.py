@@ -11,6 +11,6 @@ def create_user(session: Session, data: dict) -> User:
     return user
 
 
-def get_user_by_sub(session: Session, sub: str) -> User | None:
-    stmt = select(User).where(User.clerk_sub == sub)
+def get_user_by_sub(session: Session, sub: str, column_name: str) -> User | None:
+    stmt = select(User).where(getattr(User, column_name) == sub)
     return session.exec(stmt).scalar_one_or_none()
