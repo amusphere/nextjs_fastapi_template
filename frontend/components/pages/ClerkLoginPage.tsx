@@ -2,7 +2,7 @@ import { SignInButton } from "@clerk/nextjs";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 
-export default function LoginPage() {
+export default function ClerkLoginPage() {
   return (
     <>
       <div className="flex flex-col items-center justify-center min-h-screen">

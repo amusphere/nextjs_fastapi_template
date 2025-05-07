@@ -144,6 +144,25 @@ export async function apiPostForm<T>(
 }
 
 /**
+ * URLエンコードされたデータをPOSTする
+ */
+export async function apiPostUrlEncoded<T>(
+  endpoint: string,
+  params: URLSearchParams,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
+  return fetchApi<T>(endpoint, {
+    method: 'POST',
+    body: params.toString(),
+    headers: {
+      ...(options.headers || {}),
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    ...options,
+  });
+}
+
+/**
  * PATCH リクエスト
  */
 export async function apiPatch<T>(
