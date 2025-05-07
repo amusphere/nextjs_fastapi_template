@@ -2,6 +2,7 @@
 "use server";
 
 import { auth } from '@clerk/nextjs/server';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 // APIのベースURL
@@ -49,6 +50,21 @@ const handleError = (error: any): ApiError => {
   };
 };
 
+const getAccessToken = async (): Promise<string | null> => {
+  const authSystem = process.env.NEXT_PUBLIC_AUTH_SYSTEM;
+  if (authSystem === 'email_password') {
+    const store = await cookies();
+    const accessToken = store.get('access_token');
+    return accessToken?.value || null;
+  }
+  if (authSystem === 'clerk') {
+    const { getToken } = await auth();
+    return getToken();
+  }
+  return null;
+};
+
+
 /**
  * 汎用的なAPI呼び出し関数
  */
@@ -62,8 +78,7 @@ async function fetchApi<T>(
     // headersを必ずオブジェクトとして初期化
     const baseHeaders = { ...(defaultOptions.headers || {}), ...(options.headers || {}) };
 
-    const { getToken } = await auth();
-    const token = await getToken();
+    const token = await getAccessToken();
     if (token) {
       baseHeaders['Authorization'] = `Bearer ${token}`;
     }

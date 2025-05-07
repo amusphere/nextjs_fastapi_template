@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Form, FormField } from "../ui/form";
 import { Input } from "../ui/input";
@@ -19,8 +20,12 @@ export default function LoginForm() {
       body: JSON.stringify(data),
     });
 
-    const body = await res.json();
-    console.log(body);
+    const { success } = await res.json();
+    if (success) {
+      window.location.href = "/dashboard";
+    } else {
+      toast.error("ログインに失敗しました。");
+    }
   }
 
   return (
