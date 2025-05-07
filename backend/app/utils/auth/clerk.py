@@ -8,7 +8,8 @@ from app.repositories.user import get_user_br_column
 from app.schema import User
 from clerk_backend_api import AuthenticateRequestOptions, Clerk
 from clerk_backend_api import User as ClerkUser
-from fastapi import Request
+from fastapi import Depends, Request
+from fastapi.security import HTTPBearer
 from sqlmodel import Session
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
@@ -19,16 +20,16 @@ AUTHORIZED_PARTIES = [
     os.getenv("FRONTEND_URL", "http://localhost:3000"),
 ]
 
+security = HTTPBearer()
 
-async def get_auth_sub(request: Request) -> str | None:
-    headers_dict = {}
-    for key, value in request.headers.items():
-        headers_dict[key] = value
 
+async def get_auth_sub(request: Request, credentials=Depends(security)) -> str | None:
     httpx_req = httpx.Request(
         method=request.method,
         url=str(request.url),
-        headers=headers_dict,
+        headers={
+            "Authorization": f"Bearer {credentials.credentials}",
+        },
     )
 
     sdk = Clerk(bearer_auth=CLERK_SECRET_KEY)
