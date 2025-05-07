@@ -1,6 +1,7 @@
 "use client"
 
-import { Home, LayoutDashboard } from "lucide-react"
+import { User } from "@/types/User";
+import { Home, LayoutDashboard } from "lucide-react";
 
 import {
   Sidebar,
@@ -12,8 +13,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/components/ui/sidebar"
-import { UserButton } from "@clerk/nextjs"
+} from "@/components/components/ui/sidebar";
+import AppSidebarFooterContent from "./AppSidebarFooterContent";
+
+type Props = {
+  user: User;
+};
 
 const items = [
   {
@@ -23,12 +28,12 @@ const items = [
   },
   {
     title: "dashboard",
-    url: "/",
+    url: "/dashboard",
     icon: LayoutDashboard,
   },
 ]
 
-export default function AppSidebar() {
+export default function AppSidebar({ user }: Props) {
   return (
     <Sidebar>
       <SidebarContent>
@@ -53,15 +58,7 @@ export default function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex items-center gap-4 p-2">
-          <UserButton appearance={{
-            elements: {
-              userButtonBox: {
-                flexDirection: "row-reverse",
-              },
-            },
-          }} showName={true} />
-        </div>
+        <AppSidebarFooterContent user={user} />
       </SidebarFooter>
     </Sidebar>
   )
