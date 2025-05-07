@@ -14,7 +14,7 @@ export default async function RootPage() {
   // Check if the user is already logged in
   if (authSystem === "email_password") {
     const { data } = await apiGet<User>("/users/me");
-    if (data.uuid) {
+    if (data && data.uuid) {
       redirect("/dashboard");
       return;
     }

@@ -31,7 +31,7 @@ export default function AppSidebarFooterContent({ user }: Props) {
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Link href="/signout" className="text-red-500">
+              <Link href="/api/auth/signout" className="text-red-500">
                 Signout
               </Link>
             </DropdownMenuItem>
