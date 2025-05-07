@@ -4,7 +4,7 @@ import sys
 
 import httpx
 from app.database import engine
-from app.repositories.user import get_user_by_sub
+from app.repositories.user import get_user_br_column
 from app.schema import User
 from clerk_backend_api import AuthenticateRequestOptions, Clerk
 from clerk_backend_api import User as ClerkUser
@@ -43,17 +43,14 @@ async def get_auth_sub(request: Request) -> str | None:
         return None
 
 
-async def get_authed_user(request: Request) -> User | None:
-    sub = await get_auth_sub(request)
-    if sub is None:
-        return None
-
+async def get_authed_user(sub: str) -> User | None:
     session = Session(engine)
-    user = get_user_by_sub(session, sub, "clerk_sub")
+    user = get_user_br_column(session, sub, "clerk_sub")
+    session.close()
     return user
 
 
-def create_new_user(session: Session, sub: str) -> User:
+def create_new_user(sub: str) -> User:
     sdk = Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY"))
     clerk_user: ClerkUser = sdk.users.get(user_id=sub)
 
@@ -68,7 +65,9 @@ def create_new_user(session: Session, sub: str) -> User:
         name=clerk_user.username,
         clerk_sub=sub,
     )
+    session = Session(engine)
     session.add(user)
     session.commit()
     session.refresh(user)
+    session.close()
     return user
