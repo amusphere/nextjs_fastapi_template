@@ -1,5 +1,3 @@
-from os import access
-
 from app.database import get_session
 from app.models.auth import UserCreateModel, UserSignInModel, UserTokenModel
 from app.utils.auth.email_password import (

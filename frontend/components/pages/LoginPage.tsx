@@ -16,7 +16,7 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SignInButton mode="modal" forceRedirectUrl="/api/users/create">
+            <SignInButton mode="modal" signUpFallbackRedirectUrl="/api/users/create">
               <Button className="w-full">
                 Log In
               </Button>
