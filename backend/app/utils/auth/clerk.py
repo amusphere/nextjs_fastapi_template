@@ -14,6 +14,11 @@ from sqlmodel import Session
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
+CLERK_SECRET_KEY = os.getenv("CLERK_SECRET_KEY")
+AUTHORIZED_PARTIES = [
+    os.getenv("FRONTEND_URL", "http://localhost:3000"),
+]
+
 
 async def get_auth_sub(request: Request) -> str | None:
     headers_dict = {}
@@ -26,14 +31,10 @@ async def get_auth_sub(request: Request) -> str | None:
         headers=headers_dict,
     )
 
-    authorized_parties = [
-        os.getenv("FRONTEND_URL", "http://localhost:3000"),
-    ]
-
-    sdk = Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY"))
+    sdk = Clerk(bearer_auth=CLERK_SECRET_KEY)
     request_state = sdk.authenticate_request(
         httpx_req,
-        AuthenticateRequestOptions(authorized_parties=authorized_parties),
+        AuthenticateRequestOptions(authorized_parties=AUTHORIZED_PARTIES),
     )
 
     if request_state.is_signed_in:
@@ -51,7 +52,7 @@ async def get_authed_user(sub: str) -> User | None:
 
 
 def create_new_user(sub: str) -> User:
-    sdk = Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY"))
+    sdk = Clerk(bearer_auth=CLERK_SECRET_KEY)
     clerk_user: ClerkUser = sdk.users.get(user_id=sub)
 
     email = None
