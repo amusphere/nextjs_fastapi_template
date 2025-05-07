@@ -1,13 +1,22 @@
+import os
+
 from app.models.user import UserModel
 from app.schema import User
 from app.services.auth import add_new_user, auth_user, user_sub
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter(prefix="/users")
+
+AUTH_SYSTEM = os.getenv("AUTH_SYSTEM")
 
 
 @router.post("/create", response_model=UserModel)
 async def create_user(sub: str = Depends(user_sub)):
+    if AUTH_SYSTEM == "email_password":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email/Password authentication system does not support user creation.",
+        )
     return add_new_user(sub)
 
 

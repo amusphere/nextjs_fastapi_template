@@ -1,15 +1,11 @@
-import logging
 import os
-import sys
 
 from app.schema import User
 from fastapi import Depends, HTTPException, status
 
-logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-logger = logging.getLogger(__name__)
+AUTH_SYSTEM = os.getenv("AUTH_SYSTEM")
 
-clerk_secret_key = os.getenv("CLERK_SECRET_KEY")
-if clerk_secret_key is not None:
+if AUTH_SYSTEM == "clerk":
     from app.utils.auth.clerk import create_new_user, get_auth_sub, get_authed_user
 else:
     from app.utils.auth.email_password import (
@@ -19,7 +15,7 @@ else:
     )
 
 
-async def user_sub(sub = Depends(get_auth_sub)) -> str | None:
+async def user_sub(sub=Depends(get_auth_sub)) -> str | None:
     if sub is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -28,7 +24,7 @@ async def user_sub(sub = Depends(get_auth_sub)) -> str | None:
     return sub
 
 
-async def auth_user(sub = Depends(get_auth_sub)) -> User:
+async def auth_user(sub=Depends(get_auth_sub)) -> User:
     if sub is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -48,12 +44,4 @@ async def auth_user(sub = Depends(get_auth_sub)) -> User:
 
 def add_new_user(sub: str) -> User:
     user = create_new_user(sub)
-
-    if user is None:
-        logger.error("User not found in Clerk: %s", sub)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found in Clerk",
-        )
-
     return user
