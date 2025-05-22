@@ -28,7 +28,7 @@ def request_password_reset(email: str, session: Session) -> None:
     token_hash = _hash_token(plain_token)
     expires_at = datetime.now() + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     create_token(session, user.id, token_hash, expires_at)
-    reset_url = f"{FRONTEND_URL}/reset-password?token={plain_token}"
+    reset_url = f"{FRONTEND_URL}/auth/reset-password?token={plain_token}"
     print(f"Password reset URL for {email}: {reset_url}")
 
 
