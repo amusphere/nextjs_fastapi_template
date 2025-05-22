@@ -28,5 +28,6 @@ def get_active_token_by_hash(
 ) -> Optional[PasswordResetToken]:
     stmt = select(PasswordResetToken).where(
         PasswordResetToken.token_hash == token_hash,
+        PasswordResetToken.expires_at >= datetime.now().timestamp(),
     )
     return session.exec(stmt).first()
