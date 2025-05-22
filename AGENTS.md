@@ -71,3 +71,10 @@ Also, verify that the build passes with the following command:
 ```bash
 npm run build
 ```
+
+## Pull Requests
+- ブランチ名は英語で、機能名を含めること。
+- 単語間の区切りはハイフン（-）を使用すること。
+
+## etc.
+- 日本語で指示された場合は、日本語で回答すること。
