@@ -18,3 +18,14 @@ class User(SQLModel, table=True):
 
 
 metadata = SQLModel.metadata
+
+
+class PasswordResetToken(SQLModel, table=True):
+    __tablename__ = "password_reset_tokens"
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id")
+    token_hash: str = Field(index=True, unique=True)
+    expires_at: float
+    used: bool = Field(default=False)
