@@ -7,6 +7,8 @@ from app.utils.auth.email_password import (
 )
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from sqlmodel import Session
+from app.models.password import PasswordResetModel, PasswordResetRequestModel
+from app.services.password_reset import request_password_reset, reset_password
 
 router = APIRouter(prefix="/auth")
 
@@ -51,3 +53,21 @@ async def sign_in(
         "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "refresh_token": None,
     }
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    data: PasswordResetRequestModel,
+    session: Session = Depends(get_session),
+):
+    request_password_reset(data.email, session)
+    return {"message": "If the email exists, a reset link was sent."}
+
+
+@router.post("/reset-password")
+async def reset_password_endpoint(
+    data: PasswordResetModel,
+    session: Session = Depends(get_session),
+):
+    reset_password(data.token, data.new_password, session)
+    return {"message": "Password updated"}
