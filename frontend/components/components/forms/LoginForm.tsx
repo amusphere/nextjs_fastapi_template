@@ -58,9 +58,16 @@ export default function LoginForm() {
             />
           )}
         />
-        <Button type="submit" className="w-full">
-          Login
-        </Button>
+        <div className="flex flex-col space-y-4">
+          <Button type="submit" className="w-full">
+            Login
+          </Button>
+          <div className="text-center">
+            <a href="/auth/forgot-password" className="text-sm text-primary hover:underline">
+              Forget Password?
+            </a>
+          </div>
+        </div>
       </form>
     </Form>
   );
