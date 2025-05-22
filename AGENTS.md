@@ -73,8 +73,8 @@ npm run build
 ```
 
 ## Pull Requests
-- ブランチ名は英語で、機能名を含めること。
-- 単語間の区切りはハイフン（-）を使用すること。
+- Branch names must be in English and include the feature name.
+- Use hyphens (-) as separators between words.
 
 ## etc.
-- 日本語で指示された場合は、日本語で回答すること。
+- If instructions are given in Japanese, respond in Japanese.
