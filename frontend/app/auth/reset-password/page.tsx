@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
       setToken(tokenParam);
     } else {
       setIsError(true);
-      toast.error("無効なリンクです。パスワードリセットを再度リクエストしてください。");
+      toast.error("Invalid link. Please request a new password reset.");
     }
   }, [searchParams]);
 
@@ -54,13 +54,13 @@ export default function ResetPasswordPage() {
     if (data.new_password !== data.confirm_password) {
       form.setError("confirm_password", {
         type: "manual",
-        message: "パスワードが一致しません",
+        message: "Passwords do not match",
       });
       return;
     }
 
     if (!token) {
-      toast.error("トークンが見つかりません。パスワードリセットを再度リクエストしてください。");
+      toast.error("Token not found. Please request a new password reset.");
       return;
     }
 
@@ -81,9 +81,9 @@ export default function ResetPasswordPage() {
 
       if (res.ok && responseData.success) {
         setIsSuccess(true);
-        toast.success("パスワードが正常に更新されました。");
+        toast.success("Password has been successfully updated.");
       } else {
-        let errorMessage = "パスワードのリセット中にエラーが発生しました。";
+        let errorMessage = "An error occurred while resetting your password.";
         if (responseData.error) {
           errorMessage = typeof responseData.error === 'object' && responseData.error.detail
             ? responseData.error.detail
@@ -93,7 +93,7 @@ export default function ResetPasswordPage() {
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("リクエストの送信中にエラーが発生しました。");
+      toast.error("An error occurred while sending your request.");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,22 +104,22 @@ export default function ResetPasswordPage() {
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Card className="w-1/4 text-center">
           <CardHeader>
-            <CardTitle className="text-2xl my-2">エラー</CardTitle>
+            <CardTitle className="text-2xl my-2">Error</CardTitle>
             <CardDescription>
-              無効なパスワードリセットリンクです。
+              Invalid password reset link.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                リンクが無効であるか、期限が切れています。
-                新しいパスワードリセットリンクをリクエストしてください。
+                The link is invalid or has expired.
+                Please request a new password reset link.
               </p>
               <Button
                 className="w-full"
                 onClick={() => window.location.href = "/auth/forgot-password"}
               >
-                パスワードをリセットする
+                Reset Password
               </Button>
             </div>
           </CardContent>
@@ -132,22 +132,22 @@ export default function ResetPasswordPage() {
     <div className="flex flex-col items-center justify-center min-h-screen">
       <Card className="w-1/4 text-center">
         <CardHeader>
-          <CardTitle className="text-2xl my-2">新しいパスワードを設定</CardTitle>
+          <CardTitle className="text-2xl my-2">Set New Password</CardTitle>
           <CardDescription>
-            アカウントの新しいパスワードを入力してください。
+            Enter a new password for your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isSuccess ? (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                パスワードが正常に更新されました。新しいパスワードでログインできます。
+                Your password has been successfully updated. You can now log in with your new password.
               </p>
               <Button
                 className="w-full"
                 onClick={() => window.location.href = "/"}
               >
-                ログインする
+                Login
               </Button>
             </div>
           ) : (
@@ -160,10 +160,10 @@ export default function ResetPasswordPage() {
                   control={form.control}
                   name="new_password"
                   rules={{
-                    required: "パスワードは必須です",
+                    required: "Password is required",
                     minLength: {
                       value: 8,
-                      message: "パスワードは8文字以上である必要があります",
+                      message: "Password must be at least 8 characters",
                     },
                   }}
                   render={({ field }) => (
@@ -172,7 +172,7 @@ export default function ResetPasswordPage() {
                         <Input
                           {...field}
                           type="password"
-                          placeholder="新しいパスワード"
+                          placeholder="New password"
                           disabled={isSubmitting}
                         />
                       </FormControl>
@@ -184,7 +184,7 @@ export default function ResetPasswordPage() {
                   control={form.control}
                   name="confirm_password"
                   rules={{
-                    required: "パスワード確認は必須です",
+                    required: "Password confirmation is required",
                   }}
                   render={({ field }) => (
                     <FormItem>
@@ -192,7 +192,7 @@ export default function ResetPasswordPage() {
                         <Input
                           {...field}
                           type="password"
-                          placeholder="パスワードを確認"
+                          placeholder="Confirm password"
                           disabled={isSubmitting}
                         />
                       </FormControl>
@@ -205,7 +205,7 @@ export default function ResetPasswordPage() {
                   className="w-full"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "処理中..." : "パスワードを更新"}
+                  {isSubmitting ? "Processing..." : "Update Password"}
                 </Button>
               </form>
             </Form>

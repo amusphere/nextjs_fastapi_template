@@ -45,13 +45,13 @@ export default function ForgotPasswordPage() {
 
       if (res.ok && responseData.success) {
         setIsSuccess(true);
-        toast.success("パスワードリセットリンクが送信されました。");
+        toast.success("Password reset link has been sent.");
       } else {
-        toast.error(responseData.error || "リクエストの処理中にエラーが発生しました。");
+        toast.error(responseData.error || "An error occurred while processing your request.");
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("リクエストの送信中にエラーが発生しました。");
+      toast.error("An error occurred while sending your request.");
     } finally {
       setIsSubmitting(false);
     }
@@ -61,24 +61,24 @@ export default function ForgotPasswordPage() {
     <div className="flex flex-col items-center justify-center min-h-screen">
       <Card className="w-1/4 text-center">
         <CardHeader>
-          <CardTitle className="text-2xl my-2">パスワードをリセット</CardTitle>
+          <CardTitle className="text-2xl my-2">Reset Password</CardTitle>
           <CardDescription>
-            アカウントに関連付けられたメールアドレスを入力してください。
+            Enter the email address associated with your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isSuccess ? (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                パスワードリセットリンクを記載したメールを送信しました。
-                メールをご確認ください。
+                We&apos;ve sent an email with a password reset link.
+                Please check your email.
               </p>
               <Button
                 className="w-full"
                 variant="outline"
                 onClick={() => window.location.href = "/"}
               >
-                ログイン画面に戻る
+                Return to Login
               </Button>
             </div>
           ) : (
@@ -91,10 +91,10 @@ export default function ForgotPasswordPage() {
                   control={form.control}
                   name="email"
                   rules={{
-                    required: "メールアドレスは必須です",
+                    required: "Email address is required",
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "有効なメールアドレスを入力してください",
+                      message: "Please enter a valid email address",
                     },
                   }}
                   render={({ field }) => (
@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
                         <Input
                           {...field}
                           type="email"
-                          placeholder="メールアドレス"
+                          placeholder="Email address"
                           disabled={isSubmitting}
                           required
                         />
@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
                     className="w-full"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "送信中..." : "リセットリンクを送信"}
+                    {isSubmitting ? "Sending..." : "Send Reset Link"}
                   </Button>
                   <Link href="/" className="text-sm text-primary hover:underline">
                     Back to Login

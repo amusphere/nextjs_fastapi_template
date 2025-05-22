@@ -1,5 +1,6 @@
 "use server";
 
+import { apiPost } from "@/utils/api";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -7,27 +8,20 @@ export async function POST(req: NextRequest) {
     const { email } = await req.json();
 
     // Call the backend API
-    const apiRes = await fetch(
-      `${process.env.API_BASE_URL}/api/auth/forgot-password`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      }
+    const apiRes = await apiPost(
+      "auth/forgot-password",
+      { email }
     );
 
-    if (!apiRes.ok) {
-      const errorText = await apiRes.text();
+    if (apiRes.error) {
       return NextResponse.json(
-        { success: false, error: errorText },
-        { status: apiRes.status }
+        { success: false, error: apiRes.error.message },
+        { status: apiRes.error.status || 500 }
       );
     }
 
     return NextResponse.json(
-      { success: true, message: "パスワードリセットリンクが送信されました" },
+      { success: true, message: "Password reset link has been sent" },
       { status: 200 }
     );
   } catch (error) {
