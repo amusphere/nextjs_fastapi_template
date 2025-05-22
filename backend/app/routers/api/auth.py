@@ -1,10 +1,17 @@
 from app.database import get_session
-from app.models.auth import UserCreateModel, UserSignInModel, UserTokenModel
+from app.models.auth import (
+    UserCreateModel,
+    UserSignInModel,
+    UserTokenModel,
+    PasswordResetRequestModel,
+    PasswordResetModel,
+)
 from app.utils.auth.email_password import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     authenticate_user,
     create_new_user,
 )
+from app.services.password_reset import request_password_reset, reset_password
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from sqlmodel import Session
 
@@ -51,3 +58,31 @@ async def sign_in(
         "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "refresh_token": None,
     }
+
+
+@router.post("/request-password-reset")
+async def request_password_reset_endpoint(
+    data: PasswordResetRequestModel,
+    session: Session = Depends(get_session),
+):
+    success = request_password_reset(data.email, session)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    return {"message": "Password reset link sent"}
+
+
+@router.post("/reset-password")
+async def reset_password_endpoint(
+    data: PasswordResetModel,
+    session: Session = Depends(get_session),
+):
+    success = reset_password(data.token, data.new_password, session)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token",
+        )
+    return {"message": "Password has been reset"}

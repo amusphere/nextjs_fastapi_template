@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+RESET_TOKEN_EXPIRE_MINUTES = 60
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/signin")
@@ -45,6 +46,26 @@ def create_access_token(data: dict, expires_delta: timedelta) -> str:
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def create_password_reset_token(email: str) -> str:
+    data = {"sub": email, "scope": "password_reset"}
+    return create_access_token(
+        data=data,
+        expires_delta=timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES),
+    )
+
+
+def verify_password_reset_token(token: str) -> str | None:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except Exception as e:
+        logger.error("Invalid password reset token: %s", e)
+        return None
+    if payload.get("scope") != "password_reset":
+        logger.error("Invalid token scope: %s", payload)
+        return None
+    return payload.get("sub")
 
 
 def authenticate_user(email: str, password: str, session: Session) -> str | None:
