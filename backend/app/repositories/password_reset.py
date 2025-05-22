@@ -1,9 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlmodel import Session, select
-
 from app.schema import PasswordResetToken
+from sqlmodel import Session, select
 
 
 def create_token(
@@ -24,10 +23,10 @@ def create_token(
 
 
 def get_active_token_by_hash(
-    session: Session, token_hash: str
+    session: Session,
+    token_hash: str,
 ) -> Optional[PasswordResetToken]:
     stmt = select(PasswordResetToken).where(
         PasswordResetToken.token_hash == token_hash,
-        PasswordResetToken.used.is_(False),
     )
     return session.exec(stmt).first()

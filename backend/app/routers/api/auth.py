@@ -1,5 +1,7 @@
 from app.database import get_session
 from app.models.auth import UserCreateModel, UserSignInModel, UserTokenModel
+from app.models.password import PasswordResetModel, PasswordResetRequestModel
+from app.services.password_reset import request_password_reset, reset_password
 from app.utils.auth.email_password import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     authenticate_user,
@@ -7,8 +9,6 @@ from app.utils.auth.email_password import (
 )
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from sqlmodel import Session
-from app.models.password import PasswordResetModel, PasswordResetRequestModel
-from app.services.password_reset import request_password_reset, reset_password
 
 router = APIRouter(prefix="/auth")
 
@@ -38,7 +38,7 @@ async def sign_in(
     session: Session = Depends(get_session),
 ):
     access_token = authenticate_user(
-        email=data.email,
+        email=str(data.email),
         password=data.password,
         session=session,
     )

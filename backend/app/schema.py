@@ -26,23 +26,12 @@ class PasswordResetToken(SQLModel, table=True):
     __table_args__ = {"extend_existing": True}
 
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id")
-    token: str = Field(index=True)
+    token_hash: str = Field(index=True)
     created_at: float = Field(default_factory=lambda: datetime.now().timestamp())
     expires_at: float
 
-    user: User = Relationship(back_populates="password_reset_tokens")
-
-
-class PasswordResetToken(SQLModel, table=True):
-    __tablename__ = "password_reset_tokens"
-    __table_args__ = {"extend_existing": True}
-
-    id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.id")
-    token_hash: str = Field(index=True, unique=True)
-    expires_at: float
-    used: bool = Field(default=False)
+    user: User = Relationship(back_populates="password_reset_tokens")
 
 
 metadata = SQLModel.metadata

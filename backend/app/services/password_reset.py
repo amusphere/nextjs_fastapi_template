@@ -3,16 +3,14 @@ import os
 import secrets
 from datetime import datetime, timedelta
 
-from fastapi import HTTPException, status
-from sqlmodel import Session
-
 from app.repositories.password_reset import (
     create_token,
     get_active_token_by_hash,
 )
 from app.repositories.user import get_user_br_column
-from app.schema import User
 from app.utils.auth.email_password import get_password_hash
+from fastapi import HTTPException, status
+from sqlmodel import Session
 
 TOKEN_EXPIRE_MINUTES = 30
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -47,13 +45,8 @@ def reset_password(token: str, new_password: str, session: Session) -> None:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Token expired",
         )
-    user = session.get(User, token_entry.user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User not found",
-        )
+    user = token_entry.user
     user.password = get_password_hash(new_password)
-    session.delete(token_entry)
     session.add(user)
+    session.delete(token_entry)
     session.commit()
