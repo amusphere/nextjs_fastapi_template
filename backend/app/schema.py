@@ -17,4 +17,4 @@ class User(SQLModel, table=True):
     clerk_sub: str = Field(nullable=True, unique=True, index=True)
 
 
-metadata = SQLModel.metadata
+metadata = SQLModel.metadata  # SQLModel metadata
