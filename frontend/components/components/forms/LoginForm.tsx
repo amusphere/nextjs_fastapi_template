@@ -64,7 +64,7 @@ export default function LoginForm() {
           </Button>
           <div className="text-center">
             <a href="/auth/forgot-password" className="text-sm text-primary hover:underline">
-              Forget Password?
+              Forgot Password?
             </a>
           </div>
         </div>
