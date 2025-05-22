@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     // Call the backend API
     const apiRes = await apiPost(
-      "auth/reset-password",
+      "/auth/reset-password",
       { token, new_password }
     );
 

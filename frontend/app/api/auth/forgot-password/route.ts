@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
 
     // Call the backend API
     const apiRes = await apiPost(
-      "auth/forgot-password",
+      "/auth/forgot-password",
       { email }
     );
 
