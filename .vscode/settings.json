@@ -22,5 +22,22 @@
     ],
     "python.analysis.extraPaths": [
         "${workspaceFolder}/backend"
+    ],
+    "dbcode.connections": [
+        {
+            "connectionId": "C4sE9YmUZrZ1x5sQmtqeA",
+            "name": "nextjs_fastapi_template_dev",
+            "driver": "postgres",
+            "connectionType": "host",
+            "host": "localhost",
+            "port": 5432,
+            "ssl": false,
+            "username": "postgres",
+            "password": "",
+            "savePassword": "secretStorage",
+            "database": "development",
+            "readOnly": false,
+            "connectionTimeout": 30
+        }
     ]
 }
