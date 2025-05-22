@@ -31,9 +31,3 @@ def get_active_token_by_hash(
         PasswordResetToken.used.is_(False),
     )
     return session.exec(stmt).first()
-
-
-def mark_token_used(session: Session, token: PasswordResetToken) -> None:
-    token.used = True
-    session.add(token)
-    session.commit()

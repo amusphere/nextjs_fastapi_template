@@ -1,36 +1,59 @@
+import hashlib
+import os
+import secrets
 from datetime import datetime, timedelta
-from uuid import uuid4
 
-from sqlmodel import Session, select
+from fastapi import HTTPException, status
+from sqlmodel import Session
 
-from app.schema import PasswordResetToken
+from app.repositories.password_reset import (
+    create_token,
+    get_active_token_by_hash,
+)
+from app.repositories.user import get_user_br_column
+from app.schema import User
+from app.utils.auth.email_password import get_password_hash
 
-
-DEFAULT_EXPIRES_SECONDS = 60 * 60  # 1 hour
-
-
-def create_password_reset_token(
-    session: Session, user_id: int, expires_in: int = DEFAULT_EXPIRES_SECONDS
-) -> PasswordResetToken:
-    token = uuid4().hex
-    expires_at = datetime.now().timestamp() + expires_in
-    token_entry = PasswordResetToken(
-        user_id=user_id,
-        token=token,
-        expires_at=expires_at,
-    )
-    session.add(token_entry)
-    session.commit()
-    session.refresh(token_entry)
-    return token_entry
+TOKEN_EXPIRE_MINUTES = 30
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 
-def get_user_by_token(session: Session, token: str):
-    stmt = select(PasswordResetToken).where(PasswordResetToken.token == token)
-    token_entry = session.exec(stmt).one_or_none()
-    if token_entry is None:
-        return None
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def request_password_reset(email: str, session: Session) -> None:
+    user = get_user_br_column(session, email, "email")
+    if not user:
+        return
+    plain_token = secrets.token_urlsafe(32)
+    token_hash = _hash_token(plain_token)
+    expires_at = datetime.now() + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    create_token(session, user.id, token_hash, expires_at)
+    reset_url = f"{FRONTEND_URL}/reset-password?token={plain_token}"
+    print(f"Password reset URL for {email}: {reset_url}")
+
+
+def reset_password(token: str, new_password: str, session: Session) -> None:
+    token_hash = _hash_token(token)
+    token_entry = get_active_token_by_hash(session, token_hash)
+    if not token_entry:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token",
+        )
     if token_entry.expires_at < datetime.now().timestamp():
-        return None
-    user = token_entry.user
-    return user
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token expired",
+        )
+    user = session.get(User, token_entry.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User not found",
+        )
+    user.password = get_password_hash(new_password)
+    session.delete(token_entry)
+    session.add(user)
+    session.commit()
