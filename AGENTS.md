@@ -2,11 +2,6 @@
 
 This repository contains both the frontend and backend. Each directory is independent, allowing for simultaneous development of both frontend and backend.
 
-## Development Setup
-
-- For basic setup instructions, refer to the `README.md` at the root of the repository.
-- For Codex setup, run `codex-setup.sh`.
-
 ## Directory Structure
 
 Refer to the `README.md` at the root for the basic directory structure. Generally, you will be modifying files within the `Backend/` and `Frontend/` directories, as outlined below.
