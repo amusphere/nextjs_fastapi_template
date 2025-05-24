@@ -18,19 +18,22 @@ export default async function RootPage() {
       redirect("/dashboard");
       return;
     }
+
+    return <EmailPasswordLoginPage />;
   }
 
-  return (
-    <>
-      <SignedOut>
-        {authSystem === "email_password" && <EmailPasswordLoginPage />}
-        {authSystem === "clerk" && <ClerkLoginPage />}
-      </SignedOut>
-      <SignedIn>
-        <AuthedLayout>
-          <DashboardPage />
-        </AuthedLayout>
-      </SignedIn>
-    </>
-  );
+  if (authSystem === "clerk") {
+    return (
+      <>
+        <SignedOut>
+          <ClerkLoginPage />
+        </SignedOut>
+        <SignedIn>
+          <AuthedLayout>
+            <DashboardPage />
+          </AuthedLayout>
+        </SignedIn>
+      </>
+    );
+  }
 }
