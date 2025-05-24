@@ -19,21 +19,27 @@ export const metadata: Metadata = {
   description: "",
 };
 
+const authSystem = process.env.NEXT_PUBLIC_AUTH_SYSTEM;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <ClerkProvider>
-      <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <div className="bg-gray-100 min-h-screen">
-            {children}
-          </div>
-          <Toaster richColors expand={true} />
-        </body>
-      </html>
-    </ClerkProvider>
+  const content = (
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <div className="bg-gray-100 min-h-screen">
+          {children}
+        </div>
+        <Toaster richColors expand={true} />
+      </body>
+    </html>
   );
+
+  if (authSystem === 'clerk') {
+    return <ClerkProvider>{content}</ClerkProvider>;
+  }
+
+  return content;
 }
