@@ -19,6 +19,7 @@ class User(SQLModel, table=True):
     password_reset_tokens: list["PasswordResetToken"] = Relationship(
         back_populates="user"
     )
+    google_oauth_tokens: list["GoogleOAuthToken"] = Relationship(back_populates="user")
 
 
 class PasswordResetToken(SQLModel, table=True):
@@ -32,6 +33,29 @@ class PasswordResetToken(SQLModel, table=True):
 
     user_id: int = Field(foreign_key="users.id")
     user: User = Relationship(back_populates="password_reset_tokens")
+
+
+class GoogleOAuthToken(SQLModel, table=True):
+    __tablename__ = "google_oauth_tokens"
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+
+    access_token: str = Field(nullable=False)
+    refresh_token: str | None = Field(nullable=True)
+    token_type: str = Field(default="Bearer")
+    expires_at: float | None = Field(nullable=True)
+    scope: str | None = Field(nullable=True)
+
+    created_at: float = Field(default_factory=lambda: datetime.now().timestamp())
+    updated_at: float = Field(default_factory=lambda: datetime.now().timestamp())
+    is_active: bool = Field(default=True)
+
+    google_user_id: str | None = Field(nullable=True, index=True)
+    google_email: str | None = Field(nullable=True)
+
+    user: User = Relationship(back_populates="google_oauth_tokens")
 
 
 metadata = SQLModel.metadata

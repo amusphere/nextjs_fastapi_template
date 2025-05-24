@@ -4,6 +4,8 @@
         "apexcharts",
         "apikey",
         "datareader",
+        "Fernet",
+        "googleapiclient",
         "nextjs",
         "NIXPACKS",
         "outputsize",
