@@ -7,8 +7,12 @@ requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.15.2",
     "clerk-backend-api>=2.0.2",
+    "cryptography>=44.0.0",
     "dotenv>=0.9.9",
     "fastapi[standard]>=0.115.12",
+    "google-api-python-client>=2.150.0",
+    "google-auth>=2.35.0",
+    "google-auth-oauthlib>=1.2.1",
     "passlib[bcrypt]>=1.7.4",
     "psycopg2-binary>=2.9.10",
     "python-jose>=3.4.0",

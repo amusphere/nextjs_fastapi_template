@@ -17,6 +17,7 @@
         "sonner",
         "stooq",
         "twelvedata",
+        "userinfo",
         "webui"
     ],
     "python.autoComplete.extraPaths": [

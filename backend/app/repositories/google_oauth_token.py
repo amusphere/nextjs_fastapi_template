@@ -80,17 +80,6 @@ def update_token_data(
         return None
 
 
-def delete_oauth_token_by_id(token_id: int, session: Optional[Session] = None) -> bool:
-    """IDでトークンを物理削除"""
-    with session or get_session() as s:
-        oauth_token = s.get(GoogleOAuthToken, token_id)
-        if oauth_token:
-            s.delete(oauth_token)
-            s.commit()
-            return True
-        return False
-
-
 def delete_all_active_tokens_by_user_id(
     user_id: int, session: Optional[Session] = None
 ) -> int:
@@ -158,31 +147,3 @@ def upsert_oauth_token(
                 google_email=google_email,
             )
             return create_oauth_token(oauth_token, s)
-
-
-def replace_oauth_token(
-    user_id: int,
-    access_token: str,
-    refresh_token: Optional[str] = None,
-    expires_at: Optional[float] = None,
-    scope: Optional[str] = None,
-    google_user_id: Optional[str] = None,
-    google_email: Optional[str] = None,
-    session: Optional[Session] = None,
-) -> GoogleOAuthToken:
-    """OAuth トークンを置換（既存を削除して新規作成）"""
-    with session or get_session() as s:
-        # 既存のトークンを削除
-        delete_all_active_tokens_by_user_id(user_id, s)
-
-        # 新しいトークンを作成
-        oauth_token = GoogleOAuthToken(
-            user_id=user_id,
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_at=expires_at,
-            scope=scope,
-            google_user_id=google_user_id,
-            google_email=google_email,
-        )
-        return create_oauth_token(oauth_token, s)
