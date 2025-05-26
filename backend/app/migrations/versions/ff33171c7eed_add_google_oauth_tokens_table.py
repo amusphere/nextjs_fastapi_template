@@ -33,7 +33,6 @@ def upgrade() -> None:
         sa.Column("scope", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.Column("created_at", sa.Float(), nullable=False),
         sa.Column("updated_at", sa.Float(), nullable=False),
-        sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("google_user_id", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.Column("google_email", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.ForeignKeyConstraint(

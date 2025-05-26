@@ -125,7 +125,7 @@ class GoogleCalendarService:
         return build("calendar", "v3", credentials=credentials)
 
     def revoke_access(self, user_id: int):
-        """ユーザーのアクセスを取り消し"""
-        return oauth_repo.deactivate_all_tokens_by_user_id(
+        """ユーザーのアクセスを取り消し（レコードを削除）"""
+        return oauth_repo.delete_all_active_tokens_by_user_id(
             user_id=user_id, session=self.session
         )

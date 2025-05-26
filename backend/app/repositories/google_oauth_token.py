@@ -15,7 +15,6 @@ def find_active_token_by_user_id(
         return s.exec(
             select(GoogleOAuthToken).where(
                 GoogleOAuthToken.user_id == user_id,
-                GoogleOAuthToken.is_active,
             )
         ).first()
 
@@ -28,7 +27,6 @@ def find_all_active_tokens_by_user_id(
         return s.exec(
             select(GoogleOAuthToken).where(
                 GoogleOAuthToken.user_id == user_id,
-                GoogleOAuthToken.is_active,
             )
         ).all()
 
@@ -37,18 +35,6 @@ def create_oauth_token(
     oauth_token: GoogleOAuthToken, session: Optional[Session] = None
 ) -> GoogleOAuthToken:
     """新しいOAuthトークンを作成"""
-    with session or get_session() as s:
-        s.add(oauth_token)
-        s.commit()
-        s.refresh(oauth_token)
-        return oauth_token
-
-
-def update_oauth_token(
-    oauth_token: GoogleOAuthToken, session: Optional[Session] = None
-) -> GoogleOAuthToken:
-    """既存のOAuthトークンを更新"""
-    oauth_token.updated_at = datetime.now().timestamp()
     with session or get_session() as s:
         s.add(oauth_token)
         s.commit()
@@ -89,20 +75,6 @@ def delete_all_active_tokens_by_user_id(
         count = len(tokens)
         for token in tokens:
             s.delete(token)
-        s.commit()
-        return count
-
-
-def deactivate_all_tokens_by_user_id(
-    user_id: int, session: Optional[Session] = None
-) -> int:
-    """ユーザーのアクティブなトークンを全て無効化"""
-    with session or get_session() as s:
-        tokens = find_all_active_tokens_by_user_id(user_id, s)
-        count = len(tokens)
-        for token in tokens:
-            token.is_active = False
-            s.add(token)
         s.commit()
         return count
 

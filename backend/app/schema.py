@@ -50,7 +50,6 @@ class GoogleOAuthToken(SQLModel, table=True):
 
     created_at: float = Field(default_factory=lambda: datetime.now().timestamp())
     updated_at: float = Field(default_factory=lambda: datetime.now().timestamp())
-    is_active: bool = Field(default=True)
 
     google_user_id: str | None = Field(nullable=True, index=True)
     google_email: str | None = Field(nullable=True)
