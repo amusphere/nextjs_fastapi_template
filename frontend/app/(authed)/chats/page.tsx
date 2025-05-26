@@ -27,8 +27,6 @@ export default function ChatsPage() {
     try {
       const request: ChatPromptRequest = {
         prompt,
-        messages: messages, // 過去の会話履歴
-        model: 'gpt4.1',
         max_tokens: 1000,
         temperature: 0.7,
       };
@@ -40,7 +38,7 @@ export default function ChatsPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        setError(errorData.error || 'Failed to get response from AI');
+        setError(errorData.detail || 'Failed to get response from AI');
       } else {
         const data = await response.json() as ChatPromptResponse;
         // アシスタントの返答を追加

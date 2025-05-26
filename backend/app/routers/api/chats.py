@@ -17,7 +17,6 @@ async def send_prompt_endpoint(
 
     - **prompt**: LLMに送信するプロンプト文字列
     - **messages**: 会話履歴（オプション）
-    - **model**: 使用するモデル（デフォルト: gpt-4.1）
     - **max_tokens**: 最大トークン数（デフォルト: 1000）
     - **temperature**: 応答のランダム性（デフォルト: 0.7）
     """

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -10,8 +10,6 @@ class ChatMessage(BaseModel):
 
 class ChatPromptRequest(BaseModel):
     prompt: str
-    messages: Optional[List[ChatMessage]] = []
-    model: Optional[str] = "gpt-4.1"
     max_tokens: Optional[int] = 1000
     temperature: Optional[float] = 0.7
 

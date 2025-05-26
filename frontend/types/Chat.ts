@@ -5,8 +5,6 @@ export interface ChatMessage {
 
 export interface ChatPromptRequest {
   prompt: string;
-  messages?: ChatMessage[];
-  model?: string;
   max_tokens?: number;
   temperature?: number;
 }
