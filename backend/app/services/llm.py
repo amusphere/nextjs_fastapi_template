@@ -1,25 +1,13 @@
 import os
-from typing import Optional
 
 import openai
 from app.models.chat import ChatPromptRequest, ChatPromptResponse
 
-# グローバルクライアントインスタンス
-_client: Optional[openai.OpenAI] = None
-
 # OpenAI APIのモデル名
 model = "gpt-4.1"
 
-
-def _get_openai_client() -> openai.OpenAI:
-    """遅延初期化でOpenAIクライアントを取得"""
-    global _client
-    if _client is None:
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise Exception("OPENAI_API_KEY environment variable is not set")
-        _client = openai.OpenAI(api_key=api_key)
-    return _client
+# OpenAI APIクライアントの初期化
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 async def send_prompt_to_llm(request: ChatPromptRequest) -> ChatPromptResponse:
@@ -27,8 +15,6 @@ async def send_prompt_to_llm(request: ChatPromptRequest) -> ChatPromptResponse:
     LLMにプロンプトを送信して応答を取得する
     """
     try:
-        client = _get_openai_client()
-
         # メッセージ履歴を構築
         messages = []
 
