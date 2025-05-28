@@ -1,7 +1,7 @@
 from app.database import get_session
 from app.models.auth import UserCreateModel, UserSignInModel, UserTokenModel
 from app.models.password import PasswordResetModel, PasswordResetRequestModel
-from app.services.password_reset import request_password_reset, reset_password
+from app.services.auth import request_password_reset, reset_password
 from app.utils.auth.email_password import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     authenticate_user,
