@@ -5,9 +5,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
+from app.services.ai.models import SpokeResponse
 from sqlmodel import Session
-
-from backend.app.services.ai.models import SpokeResponse
 
 
 class BaseSpoke(ABC):
