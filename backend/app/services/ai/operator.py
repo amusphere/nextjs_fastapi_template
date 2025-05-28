@@ -1,10 +1,12 @@
 import json
+import os
 from typing import Optional
-from datetime import datetime
 from sqlmodel import Session
 
 from .models import ActionType, NextAction, OperatorResponse
-from .spokes.google_calendar import GoogleCalendarSpoke
+from .spokes.google_calendar.spoke import GoogleCalendarSpoke
+from .spoke_config import SpokeConfigLoader
+from .prompt_generator import DynamicPromptGenerator
 from ..llm import client
 
 
@@ -14,6 +16,16 @@ class OperatorHub:
     def __init__(self, encryption_key: str, session: Optional[Session] = None):
         self.encryption_key = encryption_key
         self.session = session
+
+        # スポーク設定を動的にロード
+        spokes_dir = os.path.join(os.path.dirname(__file__), 'spokes')
+        self.config_loader = SpokeConfigLoader(spokes_dir)
+        self.spoke_configs = self.config_loader.load_all_spokes()
+
+        # プロンプト生成器を初期化
+        self.prompt_generator = DynamicPromptGenerator(self.spoke_configs)
+
+        # スポークインスタンスを初期化
         self.google_calendar_spoke = GoogleCalendarSpoke(encryption_key, session)
 
     def _extract_user_id(self, prompt: str) -> int:
@@ -34,59 +46,8 @@ class OperatorHub:
         # プロンプトからuser_idを抽出
         user_id = self._extract_user_id(prompt)
 
-        system_prompt = f"""
-        あなたはユーザーのリクエストを解析し、適切なアクションを決定するAIアシスタントです。
-
-        利用可能なアクション:
-        1. get_calendar_events: カレンダーの予定を取得
-        2. create_calendar_event: カレンダーに新しい予定を作成
-        3. update_calendar_event: 既存の予定を更新
-        4. delete_calendar_event: 予定を削除
-
-        現在の日時: {datetime.now().isoformat()}
-        ユーザーID: {user_id}
-
-        ## 重要な指示:
-        - 相対的な日時表現（「明日」「来週」「今日」「次の金曜日」など）は具体的な日時に変換してください
-        - 時間が指定されていない場合は、適切なデフォルト時間を設定してください
-        - user_idは自動的に{user_id}を使用してください
-        - 期間指定がない場合は、今日から1週間後までを検索範囲とします
-
-        ## 日時変換の例:
-        - "明日" → 翌日の日付
-        - "来週" → 来週月曜日から日曜日まで
-        - "今日の予定" → 今日の0:00から23:59まで
-        - "午後2時" → 今日または指定日の14:00
-
-        ## アクション判定ロジック:
-        - "予定を確認", "スケジュール", "何がある" → get_calendar_events
-        - "予定を作成", "登録", "追加", "予約" → create_calendar_event
-        - "予定を変更", "修正", "更新" → update_calendar_event
-        - "予定を削除", "キャンセル", "消去" → delete_calendar_event
-
-        以下のJSON形式で応答してください:
-        {{
-            "actions": [
-                {{
-                    "action_type": "アクションタイプ",
-                    "parameters": {{
-                        "user_id": {user_id},
-                        "必要なパラメータ": "値"
-                    }},
-                    "priority": 1,
-                    "description": "このアクションの説明"
-                }}
-            ],
-            "analysis": "プロンプト解析結果の説明",
-            "confidence": 0.9
-        }}
-
-        パラメータの例:
-        - get_calendar_events: {{"user_id": {user_id}, "start_date": "2024-01-01T00:00:00", "end_date": "2024-01-07T23:59:59"}}
-        - create_calendar_event: {{"user_id": {user_id}, "summary": "会議", "start_time": "2024-01-01T10:00:00", "end_time": "2024-01-01T11:00:00"}}
-        - update_calendar_event: {{"user_id": {user_id}, "event_id": "event123", "summary": "更新された会議"}}
-        - delete_calendar_event: {{"user_id": {user_id}, "event_id": "event123"}}
-        """
+        # 動的にシステムプロンプトを生成
+        system_prompt = self.prompt_generator.generate_system_prompt(user_id)
 
         try:
             response = client.chat.completions.create(
@@ -162,8 +123,6 @@ class OperatorHub:
         Returns:
             OperatorResponse: 次に実行すべきアクションのリスト
         """
-        import os
-
         if not encryption_key:
             encryption_key = os.getenv("ENCRYPTION_KEY", "")
 

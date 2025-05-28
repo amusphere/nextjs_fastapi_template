@@ -5,7 +5,7 @@ from sqlmodel import Session
 from googleapiclient.errors import HttpError
 
 from app.utils.google_calendar import GoogleCalendarService
-from ..models import (
+from ...models import (
     CalendarEvent,
     CalendarEventsRequest,
     CalendarEventCreateRequest,

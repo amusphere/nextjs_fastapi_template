@@ -14,7 +14,7 @@ from .models import (
     CalendarEventDeleteRequest,
     CalendarEvent
 )
-from .spokes.google_calendar import GoogleCalendarSpoke
+from .spokes.google_calendar.spoke import GoogleCalendarSpoke
 
 
 class ActionExecutor:
