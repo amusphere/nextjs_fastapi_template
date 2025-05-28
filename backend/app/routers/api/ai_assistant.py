@@ -22,12 +22,7 @@ async def process_ai_request_endpoint(
         # プロンプトにuser_idを自動的に含めるように調整
         enhanced_prompt = f"[USER_ID: {user.id}] {request.prompt}"
 
-        result = await process_ai_request(
-            prompt=enhanced_prompt,
-            max_tokens=request.max_tokens,
-            temperature=request.temperature,
-            session=session,
-        )
+        result = await process_ai_request(prompt=enhanced_prompt, session=session)
 
         return AIResponseModel(**result)
 

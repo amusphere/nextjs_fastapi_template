@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from typing import Optional
@@ -14,6 +13,9 @@ from .spokes.spoke_system import DynamicSpokeManager, SpokeConfigLoader
 
 # OpenAI APIクライアントの初期化
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# モデルの指定
+model = "gpt-4o-mini"
 
 
 class OperatorHub:
@@ -46,7 +48,8 @@ class OperatorHub:
         return 1
 
     async def analyze_prompt(
-        self, prompt: str, max_tokens: int = 1000, temperature: float = 0.7
+        self,
+        prompt: str,
     ) -> OperatorResponse:
         """プロンプトを解析してアクション計画を生成"""
         import time
@@ -60,90 +63,68 @@ class OperatorHub:
         system_prompt = self.prompt_generator.generate_system_prompt(user_id)
 
         try:
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
+            response = client.responses.parse(
+                model=model,
+                input=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt},
                 ],
-                max_tokens=max_tokens,
-                temperature=temperature,
-                response_format={"type": "json_object"},
+                text_format=OperatorResponse,
             )
 
-            # JSONレスポンスをパース
-            response_content = response.choices[0].message.content
-            if not response_content:
-                raise PromptAnalysisError("LLMからの応答が空です")
+            # 構造化された応答を取得（Pydanticモデルとして自動的にパースされる）
+            operator_response = response.content
 
-            response_data = json.loads(response_content)
+            # LLMの応答をログに記録
+            self.logger.log_info(
+                "LLM response received",
+                {
+                    "user_id": user_id,
+                    "model": response.model,
+                    "response_content": response.content,
+                    "token_usage": {
+                        "prompt_tokens": (
+                            response.usage.prompt_tokens if response.usage else None
+                        ),
+                        "completion_tokens": (
+                            response.usage.completion_tokens if response.usage else None
+                        ),
+                        "total_tokens": (
+                            response.usage.total_tokens if response.usage else None
+                        ),
+                    },
+                },
+            )
 
-            # 必要なフィールドの検証
-            if "actions" not in response_data:
-                raise PromptAnalysisError("応答にactionsフィールドがありません")
-
-            # NextActionオブジェクトに変換
-            actions = []
-            for action_data in response_data.get("actions", []):
-                try:
-                    action_type_str = action_data.get("action_type", "unknown")
-                    # 動的スポークシステムで有効なアクションタイプかどうかをチェック
-                    supported_actions = self.spoke_manager.get_all_supported_actions()
-                    if action_type_str not in supported_actions and action_type_str != "unknown":
-                        self.logger.log_error(
-                            InvalidParameterError(
-                                f"Unknown action type: {action_type_str}"
-                            ),
-                            {"user_id": user_id, "action_data": action_data},
-                        )
-                        action_type_str = "unknown"
-
-                    action = NextAction(
-                        action_type=action_type_str,
-                        parameters=action_data.get("parameters", {}),
-                        priority=action_data.get("priority", 1),
-                        description=action_data.get("description", ""),
-                    )
-                    actions.append(action)
-                except Exception as e:
+            # 動的スポークシステムで有効なアクションタイプかどうかをチェック
+            supported_actions = self.spoke_manager.get_all_supported_actions()
+            for action in operator_response.actions:
+                if (
+                    action.action_type not in supported_actions
+                    and action.action_type != "unknown"
+                ):
                     self.logger.log_error(
-                        e, {"user_id": user_id, "action_data": action_data}
+                        InvalidParameterError(
+                            f"Unknown action type: {action.action_type}"
+                        ),
+                        {"user_id": user_id, "action": action.model_dump()},
                     )
-                    continue
+                    action.action_type = "unknown"
 
             # パフォーマンス測定
             duration = time.time() - start_time
-            confidence = response_data.get("confidence", 0.5)
 
             # ログ記録
             self.logger.log_prompt_analysis(
                 prompt=prompt,
                 user_id=user_id,
-                confidence=confidence,
-                actions_count=len(actions),
+                confidence=operator_response.confidence,
+                actions_count=len(operator_response.actions),
                 duration=duration,
             )
 
-            return OperatorResponse(
-                actions=actions,
-                analysis=response_data.get("analysis", ""),
-                confidence=confidence,
-            )
+            return operator_response
 
-        except json.JSONDecodeError as e:
-            error = PromptAnalysisError(f"JSONパースエラー: {str(e)}")
-            self.logger.log_error(error, {"user_id": user_id, "prompt": prompt})
-            return OperatorResponse(
-                actions=[
-                    NextAction(
-                        action_type="unknown",
-                        parameters={},
-                        description=f"JSONパースエラー: {str(e)}",
-                    )
-                ],
-                analysis="LLMの応答をJSONとして解析できませんでした",
-                confidence=0.0,
-            )
         except PromptAnalysisError as e:
             self.logger.log_error(e, {"user_id": user_id, "prompt": prompt})
             return OperatorResponse(
@@ -173,30 +154,3 @@ class OperatorHub:
                 analysis=f"プロンプト解析中にエラーが発生しました: {str(e)}",
                 confidence=0.0,
             )
-
-    @classmethod
-    async def create_and_analyze(
-        cls,
-        prompt: str,
-        max_tokens: int = 1000,
-        temperature: float = 0.7,
-        encryption_key: Optional[str] = None,
-        session: Optional[Session] = None,
-    ) -> OperatorResponse:
-        """OperatorHubを作成してプロンプトを解析する便利メソッド
-
-        Args:
-            prompt: 解析するプロンプト
-            max_tokens: LLMの最大トークン数
-            temperature: LLMの温度パラメータ
-            encryption_key: 暗号化キー
-            session: データベースセッション
-
-        Returns:
-            OperatorResponse: 次に実行すべきアクションのリスト
-        """
-        if not encryption_key:
-            encryption_key = os.getenv("ENCRYPTION_KEY", "")
-
-        hub = cls(encryption_key, session)
-        return await hub.analyze_prompt(prompt, max_tokens, temperature)

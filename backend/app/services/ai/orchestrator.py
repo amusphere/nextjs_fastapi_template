@@ -23,14 +23,11 @@ class AIOrchestrator:
     async def process_request(
         self,
         prompt: str,
-        max_tokens: int = 1000,
-        temperature: float = 0.7,
     ) -> Dict[str, Any]:
         """ユーザーリクエストを処理して結果を返す
 
         Args:
             prompt: ユーザーのプロンプト
-            max_tokens: LLMの最大トークン数
             temperature: LLMの温度パラメータ
 
         Returns:
@@ -42,9 +39,7 @@ class AIOrchestrator:
         try:
             # Step 1: プロンプトを解析してアクション計画を取得
             operator_response: OperatorResponse = (
-                await self.operator_hub.analyze_prompt(
-                    prompt=prompt, max_tokens=max_tokens, temperature=temperature
-                )
+                await self.operator_hub.analyze_prompt(prompt=prompt)
             )
 
             # Step 2: アクション計画を実行
@@ -146,8 +141,6 @@ class AIOrchestrator:
 
 async def process_ai_request(
     prompt: str,
-    max_tokens: int = 1000,
-    temperature: float = 0.7,
     encryption_key: Optional[str] = None,
     session: Optional[Session] = None,
 ) -> Dict[str, Any]:
@@ -155,8 +148,6 @@ async def process_ai_request(
 
     Args:
         prompt: ユーザーのプロンプト
-        max_tokens: LLMの最大トークン数
-        temperature: LLMの温度パラメータ
         encryption_key: 暗号化キー
         session: データベースセッション
 
@@ -164,4 +155,4 @@ async def process_ai_request(
         処理結果の辞書
     """
     orchestrator = AIOrchestrator(encryption_key, session)
-    return await orchestrator.process_request(prompt, max_tokens, temperature)
+    return await orchestrator.process_request(prompt)

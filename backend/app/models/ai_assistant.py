@@ -5,8 +5,6 @@ class AIRequestModel(BaseModel):
     """AIリクエストモデル"""
 
     prompt: str
-    max_tokens: int | None = 1000
-    temperature: float | None = 0.7
 
 
 class AIResponseModel(BaseModel):
