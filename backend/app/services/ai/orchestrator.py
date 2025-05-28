@@ -120,7 +120,7 @@ class AIOrchestrator:
             )
             results_data.append(
                 {
-                    "action_type": action.action_type.value if action else "unknown",
+                    "action_type": action.action_type if action else "unknown",
                     "success": result.success,
                     "description": action.description if action else "Unknown action",
                     "data_available": result.data is not None,

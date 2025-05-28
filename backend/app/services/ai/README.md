@@ -66,16 +66,17 @@ class MyServiceSpoke(BaseSpoke):
 app/services/ai/
 ├── models.py              # データモデル定義
 ├── operator.py            # 動的ハブ（OperatorHub）
-├── spoke_config.py        # スポーク設定管理（従来）
-├── spoke_loader.py        # 新: 動的スポーク読み込み
-├── spoke_interface.py     # 新: BaseSpoke抽象クラス
 ├── prompt_generator.py    # 動的プロンプト生成
 ├── executor.py            # アクション実行エンジン（動的対応）
 ├── orchestrator.py        # 統合レイヤー
+├── logger.py              # ログ機能
+├── exceptions.py          # 例外定義
 └── spokes/               # 動的スポーク
-    └── google_calendar/  # Google Calendarスポーク
-```
-    └── email/           # Emailスポーク（設定のみ）
+    ├── spoke_interface.py # BaseSpoke抽象クラス
+    ├── spoke_system.py    # 統合スポークシステム
+    └── google_calendar/   # Google Calendarスポーク
+        ├── actions.json   # アクション定義
+        └── spoke.py      # スポーク実装
 ```
 
 ## 利用可能な機能

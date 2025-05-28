@@ -293,7 +293,7 @@ class DynamicSpokeManager:
         self.logger = AIAssistantLogger("spoke_manager")
 
         # スポークを読み込み
-        spokes_dir = os.path.join(os.path.dirname(__file__), "spokes")
+        spokes_dir = os.path.dirname(__file__)  # spoke_system.pyと同じディレクトリ
         loader = DynamicSpokeLoader(spokes_dir)
         self.registry = loader.load_all_spokes()
 

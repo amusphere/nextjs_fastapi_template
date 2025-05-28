@@ -31,13 +31,13 @@ class ActionExecutor:
         try:
             # 動的スポークマネージャーを使用してアクションを実行
             result = await self.spoke_manager.execute_action(
-                action.action_type.value, action.parameters
+                action.action_type, action.parameters
             )
 
             # ログ記録
             duration = time.time() - start_time
             self.logger.log_action_execution(
-                action_type=action.action_type.value,
+                action_type=action.action_type,
                 user_id=action.parameters.get("user_id", 0),
                 success=result.success,
                 duration=duration,
@@ -52,7 +52,7 @@ class ActionExecutor:
             self.logger.log_error(
                 error,
                 {
-                    "action_type": action.action_type.value,
+                    "action_type": action.action_type,
                     "user_id": action.parameters.get("user_id", 0),
                     "duration": duration,
                 },
