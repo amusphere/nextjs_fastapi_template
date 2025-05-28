@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 
 from sqlmodel import Session
 
-from ..models import SpokeResponse
+from backend.app.services.ai.models import SpokeResponse
 
 
 class BaseSpoke(ABC):
