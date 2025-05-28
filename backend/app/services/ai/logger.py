@@ -89,6 +89,18 @@ class AIAssistantLogger:
         else:
             self.logger.error(log_message)
 
+    def error(self, message: str):
+        """一般的なエラーログ"""
+        self.logger.error(message)
+
+    def info(self, message: str):
+        """一般的な情報ログ"""
+        self.logger.info(message)
+
+    def warning(self, message: str):
+        """一般的な警告ログ"""
+        self.logger.warning(message)
+
     def log_error(self, error: Exception, context: Dict[str, Any] = None):
         """エラーログ"""
         log_message = f"Error occurred: {type(error).__name__}: {str(error)}"

@@ -1,10 +1,11 @@
 """
 動的プロンプト生成器
 """
-from typing import Dict
-from datetime import datetime
 
-from .spoke_config import SpokeConfig
+from datetime import datetime
+from typing import Dict
+
+from .spokes.spoke_config import SpokeConfig
 
 
 class DynamicPromptGenerator:
@@ -76,7 +77,9 @@ class DynamicPromptGenerator:
         actions = []
         for config in self.spoke_configs.values():
             for action in config.actions:
-                actions.append(f"{len(actions) + 1}. {action.action_type}: {action.description}")
+                actions.append(
+                    f"{len(actions) + 1}. {action.action_type}: {action.description}"
+                )
         return "\n".join(actions)
 
     def _generate_action_logic(self) -> str:
@@ -123,8 +126,12 @@ class DynamicPromptGenerator:
 
         for config in self.spoke_configs.values():
             if config.date_time_conversion_rules:
-                relative_expressions = config.date_time_conversion_rules.get('relative_expressions', {})
-                default_times = config.date_time_conversion_rules.get('default_times', {})
+                relative_expressions = config.date_time_conversion_rules.get(
+                    "relative_expressions", {}
+                )
+                default_times = config.date_time_conversion_rules.get(
+                    "default_times", {}
+                )
 
                 all_relative_expressions.update(relative_expressions)
                 all_default_times.update(default_times)

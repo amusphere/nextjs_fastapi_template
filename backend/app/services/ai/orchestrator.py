@@ -1,25 +1,25 @@
 import os
 from typing import Any, Dict, List, Optional
+
 from sqlmodel import Session
 
-from .operator import OperatorHub
 from .executor import execute_operator_response
 from .models import OperatorResponse, SpokeResponse
+from .operator import OperatorHub
 
 
 class AIOrchestrator:
     """AIアシスタントのオーケストレーター（統合レイヤー）"""
 
-    def __init__(self, encryption_key: Optional[str] = None, session: Optional[Session] = None):
+    def __init__(
+        self, encryption_key: Optional[str] = None, session: Optional[Session] = None
+    ):
         self.encryption_key = encryption_key or os.getenv("ENCRYPTION_KEY", "")
         self.session = session
         self.operator_hub = OperatorHub(self.encryption_key, session)
 
     async def process_request(
-        self,
-        prompt: str,
-        max_tokens: int = 1000,
-        temperature: float = 0.7
+        self, prompt: str, max_tokens: int = 1000, temperature: float = 0.7
     ) -> Dict[str, Any]:
         """ユーザーリクエストを処理して結果を返す
 
@@ -36,38 +36,41 @@ class AIOrchestrator:
         """
         try:
             # Step 1: プロンプトを解析してアクション計画を取得
-            operator_response: OperatorResponse = await self.operator_hub.analyze_prompt(
-                prompt=prompt,
-                max_tokens=max_tokens,
-                temperature=temperature
+            operator_response: OperatorResponse = (
+                await self.operator_hub.analyze_prompt(
+                    prompt=prompt, max_tokens=max_tokens, temperature=temperature
+                )
             )
 
             # Step 2: アクション計画を実行
             execution_results: List[SpokeResponse] = await execute_operator_response(
                 operator_response=operator_response,
                 encryption_key=self.encryption_key,
-                session=self.session
+                session=self.session,
             )
 
             # Step 3: 実行結果をサマリー
-            summary = self._create_execution_summary(operator_response, execution_results)
+            summary = self._create_execution_summary(
+                operator_response, execution_results
+            )
 
             return {
                 "success": True,
                 "operator_response": {
                     "analysis": operator_response.analysis,
                     "confidence": operator_response.confidence,
-                    "actions_planned": len(operator_response.actions)
+                    "actions_planned": len(operator_response.actions),
                 },
                 "execution_results": [
                     {
                         "success": result.success,
                         "data": result.data,
                         "error": result.error,
-                        "metadata": result.metadata
-                    } for result in execution_results
+                        "metadata": result.metadata,
+                    }
+                    for result in execution_results
                 ],
-                "summary": summary
+                "summary": summary,
             }
 
         except Exception as e:
@@ -80,14 +83,14 @@ class AIOrchestrator:
                     "total_actions": 0,
                     "successful_actions": 0,
                     "failed_actions": 1,
-                    "overall_status": "failed"
-                }
+                    "overall_status": "failed",
+                },
             }
 
     def _create_execution_summary(
         self,
         operator_response: OperatorResponse,
-        execution_results: List[SpokeResponse]
+        execution_results: List[SpokeResponse],
     ) -> Dict[str, Any]:
         """実行サマリーを作成"""
         total_actions = len(execution_results)
@@ -110,14 +113,20 @@ class AIOrchestrator:
         # 主要な結果データを抽出
         results_data = []
         for i, result in enumerate(execution_results):
-            action = operator_response.actions[i] if i < len(operator_response.actions) else None
-            results_data.append({
-                "action_type": action.action_type.value if action else "unknown",
-                "success": result.success,
-                "description": action.description if action else "Unknown action",
-                "data_available": result.data is not None,
-                "error": result.error
-            })
+            action = (
+                operator_response.actions[i]
+                if i < len(operator_response.actions)
+                else None
+            )
+            results_data.append(
+                {
+                    "action_type": action.action_type.value if action else "unknown",
+                    "success": result.success,
+                    "description": action.description if action else "Unknown action",
+                    "data_available": result.data is not None,
+                    "error": result.error,
+                }
+            )
 
         return {
             "total_actions": total_actions,
@@ -126,7 +135,7 @@ class AIOrchestrator:
             "success_rate": round(success_rate, 2),
             "overall_status": overall_status,
             "confidence": operator_response.confidence,
-            "results_data": results_data
+            "results_data": results_data,
         }
 
 
@@ -135,7 +144,7 @@ async def process_ai_request(
     max_tokens: int = 1000,
     temperature: float = 0.7,
     encryption_key: Optional[str] = None,
-    session: Optional[Session] = None
+    session: Optional[Session] = None,
 ) -> Dict[str, Any]:
     """AIリクエストを処理する便利関数
 

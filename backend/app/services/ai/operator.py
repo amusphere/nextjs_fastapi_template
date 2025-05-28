@@ -10,8 +10,8 @@ from .exceptions import InvalidParameterError, PromptAnalysisError
 from .logger import AIAssistantLogger
 from .models import ActionType, NextAction, OperatorResponse
 from .prompt_generator import DynamicPromptGenerator
-from .spoke_config import SpokeConfigLoader
-from .spokes.google_calendar.spoke import GoogleCalendarSpoke
+from .spokes.spoke_config import SpokeConfigLoader
+from .spokes.spoke_loader import DynamicSpokeManager
 
 # OpenAI APIクライアントの初期化
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -33,8 +33,8 @@ class OperatorHub:
         # プロンプト生成器を初期化
         self.prompt_generator = DynamicPromptGenerator(self.spoke_configs)
 
-        # スポークインスタンスを初期化
-        self.google_calendar_spoke = GoogleCalendarSpoke(encryption_key, session)
+        # 動的スポークマネージャーを初期化
+        self.spoke_manager = DynamicSpokeManager(encryption_key, session)
 
     def _extract_user_id(self, prompt: str) -> int:
         """プロンプトからuser_idを抽出"""
