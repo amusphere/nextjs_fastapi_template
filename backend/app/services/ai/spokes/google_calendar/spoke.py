@@ -3,10 +3,6 @@ from typing import Any, Dict, Optional
 
 from app.services.ai.models import (
     CalendarEvent,
-    CalendarEventCreateRequest,
-    CalendarEventDeleteRequest,
-    CalendarEventsRequest,
-    CalendarEventUpdateRequest,
     SpokeResponse,
 )
 from app.services.ai.spokes.spoke_interface import BaseSpoke
@@ -27,76 +23,18 @@ class GoogleCalendarSpoke(BaseSpoke):
     ) -> SpokeResponse:
         """アクションを実行する"""
         try:
-            if action_type == "get_calendar_events":
-                # パラメータを検証してリクエストオブジェクトを作成
-                request = CalendarEventsRequest(
-                    user_id=parameters["user_id"],
-                    start_date=datetime.fromisoformat(
-                        parameters["start_date"].replace("Z", "+00:00")
-                    ),
-                    end_date=datetime.fromisoformat(
-                        parameters["end_date"].replace("Z", "+00:00")
-                    ),
-                    calendar_id=parameters.get("calendar_id", "primary"),
-                    max_results=parameters.get("max_results", 100),
-                )
-                return await self.get_events(request)
+            # アクション名をメソッド名に変換 (例: get_calendar_events -> action_get_calendar_events)
+            method_name = f"action_{action_type}"
 
-            elif action_type == "create_calendar_event":
-                event = CalendarEvent(
-                    summary=parameters["summary"],
-                    start_time=datetime.fromisoformat(
-                        parameters["start_time"].replace("Z", "+00:00")
-                    ),
-                    end_time=datetime.fromisoformat(
-                        parameters["end_time"].replace("Z", "+00:00")
-                    ),
-                    description=parameters.get("description"),
-                    location=parameters.get("location"),
-                    attendees=parameters.get("attendees"),
-                    recurrence=parameters.get("recurrence"),
-                )
-                request = CalendarEventCreateRequest(
-                    user_id=parameters["user_id"],
-                    event=event,
-                    calendar_id=parameters.get("calendar_id", "primary"),
-                )
-                return await self.create_event(request)
+            # メソッドが存在するかチェック
+            if hasattr(self, method_name):
+                method = getattr(self, method_name)
+                if callable(method):
+                    return await method(parameters)
 
-            elif action_type == "update_calendar_event":
-                event = CalendarEvent(
-                    summary=parameters["summary"],
-                    start_time=datetime.fromisoformat(
-                        parameters["start_time"].replace("Z", "+00:00")
-                    ),
-                    end_time=datetime.fromisoformat(
-                        parameters["end_time"].replace("Z", "+00:00")
-                    ),
-                    description=parameters.get("description"),
-                    location=parameters.get("location"),
-                    attendees=parameters.get("attendees"),
-                    recurrence=parameters.get("recurrence"),
-                )
-                request = CalendarEventUpdateRequest(
-                    user_id=parameters["user_id"],
-                    event_id=parameters["event_id"],
-                    event=event,
-                    calendar_id=parameters.get("calendar_id", "primary"),
-                )
-                return await self.update_event(request)
-
-            elif action_type == "delete_calendar_event":
-                request = CalendarEventDeleteRequest(
-                    user_id=parameters["user_id"],
-                    event_id=parameters["event_id"],
-                    calendar_id=parameters.get("calendar_id", "primary"),
-                )
-                return await self.delete_event(request)
-
-            else:
-                return SpokeResponse(
-                    success=False, error=f"Unsupported action type: {action_type}"
-                )
+            return SpokeResponse(
+                success=False, error=f"Unsupported action type: {action_type}"
+            )
 
         except Exception as e:
             return SpokeResponse(
@@ -106,27 +44,43 @@ class GoogleCalendarSpoke(BaseSpoke):
     @classmethod
     def get_supported_actions(cls) -> list[str]:
         """このスポークがサポートするアクションタイプのリストを返す"""
-        return [
-            "get_calendar_events",
-            "create_calendar_event",
-            "update_calendar_event",
-            "delete_calendar_event",
-        ]
+        # action_で始まるメソッドを自動的に検出
+        actions = []
+        for attr_name in dir(cls):
+            if attr_name.startswith("action_") and callable(getattr(cls, attr_name)):
+                # action_プレフィックスを除去してアクション名を取得
+                action_name = attr_name[7:]  # "action_"の長さは7文字
+                actions.append(action_name)
+        return sorted(actions)  # ソートして一貫性を保つ
 
-    async def get_events(self, request: CalendarEventsRequest) -> SpokeResponse:
-        """指定期間のカレンダーイベントを取得"""
+    # =================
+    # アクション関数群
+    # =================
+
+    async def action_get_calendar_events(self, parameters: Dict[str, Any]) -> SpokeResponse:
+        """カレンダーイベント取得アクション"""
         try:
+            # パラメータから日付を解析
+            start_date = datetime.fromisoformat(
+                parameters["start_date"].replace("Z", "+00:00")
+            )
+            end_date = datetime.fromisoformat(
+                parameters["end_date"].replace("Z", "+00:00")
+            )
+            calendar_id = parameters.get("calendar_id", "primary")
+            max_results = parameters.get("max_results", 100)
+
             # Google Calendar APIサービスを取得
-            service = self.calendar_service.get_calendar_service(request.user_id)
+            service = self.calendar_service.get_calendar_service(parameters["user_id"])
 
             # イベントを取得
             events_result = (
                 service.events()
                 .list(
-                    calendarId=request.calendar_id,
-                    timeMin=request.start_date.isoformat(),
-                    timeMax=request.end_date.isoformat(),
-                    maxResults=request.max_results,
+                    calendarId=calendar_id,
+                    timeMin=start_date.isoformat(),
+                    timeMax=end_date.isoformat(),
+                    maxResults=max_results,
                     singleEvents=True,
                     orderBy="startTime",
                 )
@@ -170,7 +124,7 @@ class GoogleCalendarSpoke(BaseSpoke):
                 data=calendar_events,
                 metadata={
                     "total_events": len(calendar_events),
-                    "period": f"{request.start_date.date()} to {request.end_date.date()}",
+                    "period": f"{start_date.date()} to {end_date.date()}",
                 },
             )
 
@@ -185,42 +139,47 @@ class GoogleCalendarSpoke(BaseSpoke):
         except Exception as e:
             return SpokeResponse(success=False, error=f"Unexpected error: {str(e)}")
 
-    async def create_event(self, request: CalendarEventCreateRequest) -> SpokeResponse:
-        """カレンダーイベントを作成"""
+    async def action_create_calendar_event(self, parameters: Dict[str, Any]) -> SpokeResponse:
+        """カレンダーイベント作成アクション"""
         try:
-            service = self.calendar_service.get_calendar_service(request.user_id)
+            service = self.calendar_service.get_calendar_service(parameters["user_id"])
+            calendar_id = parameters.get("calendar_id", "primary")
 
             # イベントデータを構築
             event_body = {
-                "summary": request.event.summary,
+                "summary": parameters["summary"],
                 "start": {
-                    "dateTime": request.event.start_time.isoformat(),
+                    "dateTime": datetime.fromisoformat(
+                        parameters["start_time"].replace("Z", "+00:00")
+                    ).isoformat(),
                     "timeZone": "Asia/Tokyo",
                 },
                 "end": {
-                    "dateTime": request.event.end_time.isoformat(),
+                    "dateTime": datetime.fromisoformat(
+                        parameters["end_time"].replace("Z", "+00:00")
+                    ).isoformat(),
                     "timeZone": "Asia/Tokyo",
                 },
             }
 
-            if request.event.description:
-                event_body["description"] = request.event.description
+            if parameters.get("description"):
+                event_body["description"] = parameters["description"]
 
-            if request.event.location:
-                event_body["location"] = request.event.location
+            if parameters.get("location"):
+                event_body["location"] = parameters["location"]
 
-            if request.event.attendees:
+            if parameters.get("attendees"):
                 event_body["attendees"] = [
-                    {"email": email} for email in request.event.attendees
+                    {"email": email} for email in parameters["attendees"]
                 ]
 
-            if request.event.recurrence:
-                event_body["recurrence"] = request.event.recurrence
+            if parameters.get("recurrence"):
+                event_body["recurrence"] = parameters["recurrence"]
 
             # イベントを作成
             created_event = (
                 service.events()
-                .insert(calendarId=request.calendar_id, body=event_body)
+                .insert(calendarId=calendar_id, body=event_body)
                 .execute()
             )
 
@@ -230,7 +189,7 @@ class GoogleCalendarSpoke(BaseSpoke):
                     "event_id": created_event.get("id"),
                     "html_link": created_event.get("htmlLink"),
                 },
-                metadata={"calendar_id": request.calendar_id},
+                metadata={"calendar_id": calendar_id},
             )
 
         except HttpError as e:
@@ -244,49 +203,55 @@ class GoogleCalendarSpoke(BaseSpoke):
         except Exception as e:
             return SpokeResponse(success=False, error=f"Unexpected error: {str(e)}")
 
-    async def update_event(self, request: CalendarEventUpdateRequest) -> SpokeResponse:
-        """カレンダーイベントを更新"""
+    async def action_update_calendar_event(self, parameters: Dict[str, Any]) -> SpokeResponse:
+        """カレンダーイベント更新アクション"""
         try:
-            service = self.calendar_service.get_calendar_service(request.user_id)
+            service = self.calendar_service.get_calendar_service(parameters["user_id"])
+            calendar_id = parameters.get("calendar_id", "primary")
+            event_id = parameters["event_id"]
 
             # 既存のイベントを取得
             existing_event = (
                 service.events()
-                .get(calendarId=request.calendar_id, eventId=request.event_id)
+                .get(calendarId=calendar_id, eventId=event_id)
                 .execute()
             )
 
             # イベントデータを更新
-            existing_event["summary"] = request.event.summary
+            existing_event["summary"] = parameters["summary"]
             existing_event["start"] = {
-                "dateTime": request.event.start_time.isoformat(),
+                "dateTime": datetime.fromisoformat(
+                    parameters["start_time"].replace("Z", "+00:00")
+                ).isoformat(),
                 "timeZone": "Asia/Tokyo",
             }
             existing_event["end"] = {
-                "dateTime": request.event.end_time.isoformat(),
+                "dateTime": datetime.fromisoformat(
+                    parameters["end_time"].replace("Z", "+00:00")
+                ).isoformat(),
                 "timeZone": "Asia/Tokyo",
             }
 
-            if request.event.description is not None:
-                existing_event["description"] = request.event.description
+            if parameters.get("description") is not None:
+                existing_event["description"] = parameters["description"]
 
-            if request.event.location is not None:
-                existing_event["location"] = request.event.location
+            if parameters.get("location") is not None:
+                existing_event["location"] = parameters["location"]
 
-            if request.event.attendees is not None:
+            if parameters.get("attendees") is not None:
                 existing_event["attendees"] = [
-                    {"email": email} for email in request.event.attendees
+                    {"email": email} for email in parameters["attendees"]
                 ]
 
-            if request.event.recurrence is not None:
-                existing_event["recurrence"] = request.event.recurrence
+            if parameters.get("recurrence") is not None:
+                existing_event["recurrence"] = parameters["recurrence"]
 
             # イベントを更新
             updated_event = (
                 service.events()
                 .update(
-                    calendarId=request.calendar_id,
-                    eventId=request.event_id,
+                    calendarId=calendar_id,
+                    eventId=event_id,
                     body=existing_event,
                 )
                 .execute()
@@ -298,7 +263,7 @@ class GoogleCalendarSpoke(BaseSpoke):
                     "event_id": updated_event.get("id"),
                     "html_link": updated_event.get("htmlLink"),
                 },
-                metadata={"calendar_id": request.calendar_id},
+                metadata={"calendar_id": calendar_id},
             )
 
         except HttpError as e:
@@ -312,20 +277,22 @@ class GoogleCalendarSpoke(BaseSpoke):
         except Exception as e:
             return SpokeResponse(success=False, error=f"Unexpected error: {str(e)}")
 
-    async def delete_event(self, request: CalendarEventDeleteRequest) -> SpokeResponse:
-        """カレンダーイベントを削除"""
+    async def action_delete_calendar_event(self, parameters: Dict[str, Any]) -> SpokeResponse:
+        """カレンダーイベント削除アクション"""
         try:
-            service = self.calendar_service.get_calendar_service(request.user_id)
+            service = self.calendar_service.get_calendar_service(parameters["user_id"])
+            calendar_id = parameters.get("calendar_id", "primary")
+            event_id = parameters["event_id"]
 
             # イベントを削除
             service.events().delete(
-                calendarId=request.calendar_id, eventId=request.event_id
+                calendarId=calendar_id, eventId=event_id
             ).execute()
 
             return SpokeResponse(
                 success=True,
-                data={"deleted_event_id": request.event_id},
-                metadata={"calendar_id": request.calendar_id},
+                data={"deleted_event_id": event_id},
+                metadata={"calendar_id": calendar_id},
             )
 
         except HttpError as e:
@@ -344,3 +311,35 @@ class GoogleCalendarSpoke(BaseSpoke):
             return SpokeResponse(success=False, error=f"Authentication error: {str(e)}")
         except Exception as e:
             return SpokeResponse(success=False, error=f"Unexpected error: {str(e)}")
+
+    async def action_list_calendars(self, parameters: Dict[str, Any]) -> SpokeResponse:
+        """カレンダーリスト取得アクション（新しいアクションの例）"""
+        try:
+            service = self.calendar_service.get_calendar_service(parameters["user_id"])
+
+            # カレンダーリストを取得
+            calendars_result = service.calendarList().list().execute()
+            calendars = calendars_result.get("items", [])
+
+            calendar_list = []
+            for calendar in calendars:
+                calendar_info = {
+                    "id": calendar.get("id"),
+                    "summary": calendar.get("summary"),
+                    "description": calendar.get("description"),
+                    "primary": calendar.get("primary", False),
+                    "access_role": calendar.get("accessRole"),
+                }
+                calendar_list.append(calendar_info)
+
+            return SpokeResponse(
+                success=True,
+                data=calendar_list,
+                metadata={"total_calendars": len(calendar_list)}
+            )
+
+        except Exception as e:
+            return SpokeResponse(
+                success=False,
+                error=f"Error listing calendars: {str(e)}"
+            )
