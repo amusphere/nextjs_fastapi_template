@@ -1,10 +1,10 @@
 """
 AIアシスタント用のログシステム
 """
-import logging
+
 import json
-from datetime import datetime
-from typing import Any, Dict, Optional
+import logging
+from typing import Any, Dict
 
 
 class AIAssistantLogger:
@@ -18,7 +18,7 @@ class AIAssistantLogger:
         if not self.logger.handlers:
             console_handler = logging.StreamHandler()
             formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
@@ -29,7 +29,7 @@ class AIAssistantLogger:
         user_id: int,
         confidence: float,
         actions_count: int,
-        duration: float = None
+        duration: float = None,
     ):
         """プロンプト解析のログ"""
         self.logger.info(
@@ -37,7 +37,9 @@ class AIAssistantLogger:
             f"User: {user_id}, "
             f"Actions: {actions_count}, "
             f"Confidence: {confidence:.2f}, "
-            f"Duration: {duration:.2f}s" if duration else f"Duration: N/A"
+            f"Duration: {duration:.2f}s"
+            if duration
+            else "Duration: N/A"
         )
 
     def log_action_execution(
@@ -46,14 +48,12 @@ class AIAssistantLogger:
         user_id: int,
         success: bool,
         duration: float = None,
-        error: str = None
+        error: str = None,
     ):
         """アクション実行のログ"""
         status = "SUCCESS" if success else "FAILED"
         log_message = (
-            f"Action execution {status} - "
-            f"Type: {action_type}, "
-            f"User: {user_id}"
+            f"Action execution {status} - " f"Type: {action_type}, " f"User: {user_id}"
         )
 
         if duration:
@@ -73,7 +73,7 @@ class AIAssistantLogger:
         user_id: int,
         event_count: int = None,
         event_id: str = None,
-        success: bool = True
+        success: bool = True,
     ):
         """カレンダー操作のログ"""
         log_message = f"Calendar {operation} - User: {user_id}"

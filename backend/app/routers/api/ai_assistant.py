@@ -56,28 +56,3 @@ async def process_ai_request_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process AI request: {str(e)}",
         )
-
-
-@router.get("/actions")
-async def get_available_actions():
-    """利用可能なアクションタイプを取得"""
-    from ...services.ai.models import ActionType
-
-    actions = [
-        {"action_type": action.value, "description": _get_action_description(action)}
-        for action in ActionType
-        if action != ActionType.UNKNOWN
-    ]
-
-    return {"available_actions": actions}
-
-
-def _get_action_description(action_type) -> str:
-    """アクションタイプの説明を取得"""
-    descriptions = {
-        "get_calendar_events": "指定期間のカレンダーイベントを取得します",
-        "create_calendar_event": "新しいカレンダーイベントを作成します",
-        "update_calendar_event": "既存のカレンダーイベントを更新します",
-        "delete_calendar_event": "カレンダーイベントを削除します",
-    }
-    return descriptions.get(action_type.value, "説明なし")

@@ -1,18 +1,22 @@
 import os
-from typing import Any, Dict, List, Optional
+import time
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from sqlmodel import Session
 
+from .exceptions import ActionExecutionError
+from .logger import AIAssistantLogger
 from .models import (
     ActionType,
+    CalendarEvent,
+    CalendarEventCreateRequest,
+    CalendarEventDeleteRequest,
+    CalendarEventsRequest,
+    CalendarEventUpdateRequest,
     NextAction,
     OperatorResponse,
     SpokeResponse,
-    CalendarEventsRequest,
-    CalendarEventCreateRequest,
-    CalendarEventUpdateRequest,
-    CalendarEventDeleteRequest,
-    CalendarEvent
 )
 from .spokes.google_calendar.spoke import GoogleCalendarSpoke
 
@@ -24,33 +28,58 @@ class ActionExecutor:
         self.encryption_key = encryption_key
         self.session = session
         self.google_calendar_spoke = GoogleCalendarSpoke(encryption_key, session)
+        self.logger = AIAssistantLogger("action_executor")
 
     async def execute_action(self, action: NextAction) -> SpokeResponse:
         """個別のアクションを実行"""
+        start_time = time.time()
+
         try:
-            if action.action_type == ActionType.GET_CALENDAR_EVENTS:
-                return await self._execute_get_calendar_events(action.parameters)
+            # アクションタイプに基づいて適切なメソッドを呼び出し
+            action_methods = {
+                ActionType.GET_CALENDAR_EVENTS: self._execute_get_calendar_events,
+                ActionType.CREATE_CALENDAR_EVENT: self._execute_create_calendar_event,
+                ActionType.UPDATE_CALENDAR_EVENT: self._execute_update_calendar_event,
+                ActionType.DELETE_CALENDAR_EVENT: self._execute_delete_calendar_event,
+            }
 
-            elif action.action_type == ActionType.CREATE_CALENDAR_EVENT:
-                return await self._execute_create_calendar_event(action.parameters)
-
-            elif action.action_type == ActionType.UPDATE_CALENDAR_EVENT:
-                return await self._execute_update_calendar_event(action.parameters)
-
-            elif action.action_type == ActionType.DELETE_CALENDAR_EVENT:
-                return await self._execute_delete_calendar_event(action.parameters)
-
-            else:
-                return SpokeResponse(
+            method = action_methods.get(action.action_type)
+            if not method:
+                error_msg = f"Unknown action type: {action.action_type}"
+                self.logger.log_action_execution(
+                    action_type=action.action_type.value,
+                    user_id=action.parameters.get("user_id", 0),
                     success=False,
-                    error=f"Unknown action type: {action.action_type}"
+                    error=error_msg,
                 )
+                return SpokeResponse(success=False, error=error_msg)
+
+            result = await method(action.parameters)
+
+            # ログ記録
+            duration = time.time() - start_time
+            self.logger.log_action_execution(
+                action_type=action.action_type.value,
+                user_id=action.parameters.get("user_id", 0),
+                success=result.success,
+                duration=duration,
+                error=result.error if not result.success else None,
+            )
+
+            return result
 
         except Exception as e:
-            return SpokeResponse(
-                success=False,
-                error=f"Execution error: {str(e)}"
+            duration = time.time() - start_time
+            error = ActionExecutionError(f"Execution error: {str(e)}")
+            self.logger.log_error(
+                error,
+                {
+                    "action_type": action.action_type.value,
+                    "user_id": action.parameters.get("user_id", 0),
+                    "duration": duration,
+                },
             )
+            return SpokeResponse(success=False, error=str(error))
 
     async def execute_actions(self, actions: List[NextAction]) -> List[SpokeResponse]:
         """複数のアクションを優先度順に実行"""
@@ -68,29 +97,36 @@ class ActionExecutor:
 
         return results
 
-    async def _execute_get_calendar_events(self, parameters: Dict[str, Any]) -> SpokeResponse:
+    def _validate_required_params(
+        self, parameters: Dict[str, Any], required_fields: List[str]
+    ) -> Optional[str]:
+        """必須パラメータを検証"""
+        missing_fields = [
+            field for field in required_fields if not parameters.get(field)
+        ]
+        if missing_fields:
+            return f"Required fields missing: {', '.join(missing_fields)}"
+        return None
+
+    def _parse_datetime(self, datetime_str: str) -> datetime:
+        """日時文字列をdatetimeオブジェクトに変換"""
+        return datetime.fromisoformat(datetime_str.replace("Z", "+00:00"))
+
+    async def _execute_get_calendar_events(
+        self, parameters: Dict[str, Any]
+    ) -> SpokeResponse:
         """カレンダーイベント取得を実行"""
         try:
-            # パラメータの検証と変換
-            user_id = parameters.get("user_id")
-            if not user_id:
-                return SpokeResponse(
-                    success=False,
-                    error="user_id is required"
-                )
+            # 必須パラメータの検証
+            validation_error = self._validate_required_params(
+                parameters, ["user_id", "start_date", "end_date"]
+            )
+            if validation_error:
+                return SpokeResponse(success=False, error=validation_error)
 
-            start_date_str = parameters.get("start_date")
-            end_date_str = parameters.get("end_date")
-
-            if not start_date_str or not end_date_str:
-                return SpokeResponse(
-                    success=False,
-                    error="start_date and end_date are required"
-                )
-
-            start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
-            end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
-
+            user_id = parameters["user_id"]
+            start_date = self._parse_datetime(parameters["start_date"])
+            end_date = self._parse_datetime(parameters["end_date"])
             calendar_id = parameters.get("calendar_id", "primary")
             max_results = parameters.get("max_results", 100)
 
@@ -99,168 +135,124 @@ class ActionExecutor:
                 start_date=start_date,
                 end_date=end_date,
                 calendar_id=calendar_id,
-                max_results=max_results
+                max_results=max_results,
             )
 
             return await self.google_calendar_spoke.get_events(request)
 
         except ValueError as e:
-            return SpokeResponse(
-                success=False,
-                error=f"Invalid date format: {str(e)}"
-            )
+            return SpokeResponse(success=False, error=f"Invalid date format: {str(e)}")
         except Exception as e:
-            return SpokeResponse(
-                success=False,
-                error=f"Parameter error: {str(e)}"
-            )
+            return SpokeResponse(success=False, error=f"Parameter error: {str(e)}")
 
-    async def _execute_create_calendar_event(self, parameters: Dict[str, Any]) -> SpokeResponse:
+    async def _execute_create_calendar_event(
+        self, parameters: Dict[str, Any]
+    ) -> SpokeResponse:
         """カレンダーイベント作成を実行"""
         try:
-            user_id = parameters.get("user_id")
-            if not user_id:
-                return SpokeResponse(
-                    success=False,
-                    error="user_id is required"
-                )
+            # 必須パラメータの検証
+            validation_error = self._validate_required_params(
+                parameters, ["user_id", "summary", "start_time", "end_time"]
+            )
+            if validation_error:
+                return SpokeResponse(success=False, error=validation_error)
 
-            # 必須フィールドの確認
-            summary = parameters.get("summary")
-            start_time_str = parameters.get("start_time")
-            end_time_str = parameters.get("end_time")
-
-            if not all([summary, start_time_str, end_time_str]):
-                return SpokeResponse(
-                    success=False,
-                    error="summary, start_time, and end_time are required"
-                )
-
-            start_time = datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
-            end_time = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
+            user_id = parameters["user_id"]
+            start_time = self._parse_datetime(parameters["start_time"])
+            end_time = self._parse_datetime(parameters["end_time"])
 
             event = CalendarEvent(
-                summary=summary,
+                summary=parameters["summary"],
                 description=parameters.get("description"),
                 start_time=start_time,
                 end_time=end_time,
                 location=parameters.get("location"),
                 attendees=parameters.get("attendees"),
-                recurrence=parameters.get("recurrence")
+                recurrence=parameters.get("recurrence"),
             )
-
-            calendar_id = parameters.get("calendar_id", "primary")
 
             request = CalendarEventCreateRequest(
                 user_id=user_id,
                 event=event,
-                calendar_id=calendar_id
+                calendar_id=parameters.get("calendar_id", "primary"),
             )
 
             return await self.google_calendar_spoke.create_event(request)
 
         except ValueError as e:
-            return SpokeResponse(
-                success=False,
-                error=f"Invalid date format: {str(e)}"
-            )
+            return SpokeResponse(success=False, error=f"Invalid date format: {str(e)}")
         except Exception as e:
-            return SpokeResponse(
-                success=False,
-                error=f"Parameter error: {str(e)}"
-            )
+            return SpokeResponse(success=False, error=f"Parameter error: {str(e)}")
 
-    async def _execute_update_calendar_event(self, parameters: Dict[str, Any]) -> SpokeResponse:
+    async def _execute_update_calendar_event(
+        self, parameters: Dict[str, Any]
+    ) -> SpokeResponse:
         """カレンダーイベント更新を実行"""
         try:
-            user_id = parameters.get("user_id")
-            event_id = parameters.get("event_id")
+            # 必須パラメータの検証
+            validation_error = self._validate_required_params(
+                parameters, ["user_id", "event_id", "summary", "start_time", "end_time"]
+            )
+            if validation_error:
+                return SpokeResponse(success=False, error=validation_error)
 
-            if not user_id or not event_id:
-                return SpokeResponse(
-                    success=False,
-                    error="user_id and event_id are required"
-                )
-
-            # 必須フィールドの確認
-            summary = parameters.get("summary")
-            start_time_str = parameters.get("start_time")
-            end_time_str = parameters.get("end_time")
-
-            if not all([summary, start_time_str, end_time_str]):
-                return SpokeResponse(
-                    success=False,
-                    error="summary, start_time, and end_time are required"
-                )
-
-            start_time = datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
-            end_time = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
+            user_id = parameters["user_id"]
+            event_id = parameters["event_id"]
+            start_time = self._parse_datetime(parameters["start_time"])
+            end_time = self._parse_datetime(parameters["end_time"])
 
             event = CalendarEvent(
-                summary=summary,
+                summary=parameters["summary"],
                 description=parameters.get("description"),
                 start_time=start_time,
                 end_time=end_time,
                 location=parameters.get("location"),
                 attendees=parameters.get("attendees"),
-                recurrence=parameters.get("recurrence")
+                recurrence=parameters.get("recurrence"),
             )
-
-            calendar_id = parameters.get("calendar_id", "primary")
 
             request = CalendarEventUpdateRequest(
                 user_id=user_id,
                 event_id=event_id,
                 event=event,
-                calendar_id=calendar_id
+                calendar_id=parameters.get("calendar_id", "primary"),
             )
 
             return await self.google_calendar_spoke.update_event(request)
 
         except ValueError as e:
-            return SpokeResponse(
-                success=False,
-                error=f"Invalid date format: {str(e)}"
-            )
+            return SpokeResponse(success=False, error=f"Invalid date format: {str(e)}")
         except Exception as e:
-            return SpokeResponse(
-                success=False,
-                error=f"Parameter error: {str(e)}"
-            )
+            return SpokeResponse(success=False, error=f"Parameter error: {str(e)}")
 
-    async def _execute_delete_calendar_event(self, parameters: Dict[str, Any]) -> SpokeResponse:
+    async def _execute_delete_calendar_event(
+        self, parameters: Dict[str, Any]
+    ) -> SpokeResponse:
         """カレンダーイベント削除を実行"""
         try:
-            user_id = parameters.get("user_id")
-            event_id = parameters.get("event_id")
-
-            if not user_id or not event_id:
-                return SpokeResponse(
-                    success=False,
-                    error="user_id and event_id are required"
-                )
-
-            calendar_id = parameters.get("calendar_id", "primary")
+            # 必須パラメータの検証
+            validation_error = self._validate_required_params(
+                parameters, ["user_id", "event_id"]
+            )
+            if validation_error:
+                return SpokeResponse(success=False, error=validation_error)
 
             request = CalendarEventDeleteRequest(
-                user_id=user_id,
-                event_id=event_id,
-                calendar_id=calendar_id
+                user_id=parameters["user_id"],
+                event_id=parameters["event_id"],
+                calendar_id=parameters.get("calendar_id", "primary"),
             )
 
             return await self.google_calendar_spoke.delete_event(request)
 
         except Exception as e:
-            return SpokeResponse(
-                success=False,
-                error=f"Parameter error: {str(e)}"
-            )
+            return SpokeResponse(success=False, error=f"Parameter error: {str(e)}")
 
 
 async def execute_operator_response(
     operator_response: OperatorResponse,
     encryption_key: Optional[str] = None,
-    session: Optional[Session] = None
+    session: Optional[Session] = None,
 ) -> List[SpokeResponse]:
     """オペレーターレスポンスに基づいてアクションを実行
 
