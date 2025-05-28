@@ -5,7 +5,7 @@
 from datetime import datetime
 from typing import Dict
 
-from .spokes.spoke_config import SpokeConfig
+from .spokes.spoke_system import SpokeConfig
 
 
 class DynamicPromptGenerator:

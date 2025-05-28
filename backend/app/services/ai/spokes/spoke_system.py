@@ -1,10 +1,12 @@
 """
-動的スポーク読み込みシステム
+統合スポークシステム - 設定管理・動的ローダー・マネージャー
 """
 
 import importlib.util
 import json
 import os
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
 
 from sqlmodel import Session
@@ -14,16 +16,134 @@ from ..models import SpokeResponse
 from .spoke_interface import BaseSpoke
 
 
+@dataclass
+class ActionParameter:
+    """アクションパラメータの定義"""
+
+    type: str
+    required: bool
+    description: str
+    format: Optional[str] = None
+    default: Optional[str] = None
+
+
+@dataclass
+class ActionDefinition:
+    """アクション定義"""
+
+    action_type: str
+    display_name: str
+    description: str
+    keywords: List[str]
+    parameters: Dict[str, ActionParameter]
+    examples: List[str]
+
+
+@dataclass
+class SpokeConfig:
+    """スポーク設定"""
+
+    spoke_name: str
+    display_name: str
+    description: str
+    actions: List[ActionDefinition]
+    date_time_conversion_rules: Optional[Dict[str, Any]] = None
+
+
+class SpokeConfigLoader:
+    """スポーク設定ローダー"""
+
+    def __init__(self, spokes_dir: str):
+        self.spokes_dir = Path(spokes_dir)
+        self._configs: Dict[str, SpokeConfig] = {}
+
+    def load_all_spokes(self) -> Dict[str, SpokeConfig]:
+        """すべてのスポーク設定を読み込み"""
+        self._configs.clear()
+
+        for spoke_dir in self.spokes_dir.iterdir():
+            if spoke_dir.is_dir() and not spoke_dir.name.startswith("."):
+                config_file = spoke_dir / "actions.json"
+                if config_file.exists():
+                    try:
+                        config = self._load_spoke_config(config_file)
+                        self._configs[config.spoke_name] = config
+                    except Exception as e:
+                        print(f"Error loading spoke config from {config_file}: {e}")
+
+        return self._configs
+
+    def _load_spoke_config(self, config_file: Path) -> SpokeConfig:
+        """スポーク設定ファイルを読み込み"""
+        with open(config_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # アクション定義をパース
+        actions = []
+        for action_data in data.get("actions", []):
+            parameters = {}
+            for param_name, param_data in action_data.get("parameters", {}).items():
+                parameters[param_name] = ActionParameter(
+                    type=param_data.get("type", "string"),
+                    required=param_data.get("required", False),
+                    description=param_data.get("description", ""),
+                    format=param_data.get("format"),
+                    default=param_data.get("default"),
+                )
+
+            action = ActionDefinition(
+                action_type=action_data.get("action_type", ""),
+                display_name=action_data.get("display_name", ""),
+                description=action_data.get("description", ""),
+                keywords=action_data.get("keywords", []),
+                parameters=parameters,
+                examples=action_data.get("examples", []),
+            )
+            actions.append(action)
+
+        return SpokeConfig(
+            spoke_name=data.get("spoke_name", ""),
+            display_name=data.get("display_name", ""),
+            description=data.get("description", ""),
+            actions=actions,
+            date_time_conversion_rules=data.get("date_time_conversion_rules"),
+        )
+
+    def get_spoke_config(self, spoke_name: str) -> Optional[SpokeConfig]:
+        """指定されたスポークの設定を取得"""
+        return self._configs.get(spoke_name)
+
+    def get_all_actions(self) -> List[ActionDefinition]:
+        """すべてのスポークからアクション定義を取得"""
+        all_actions = []
+        for config in self._configs.values():
+            all_actions.extend(config.actions)
+        return all_actions
+
+    def get_actions_by_keywords(self, keywords: List[str]) -> List[ActionDefinition]:
+        """キーワードに基づいてアクションを検索"""
+        matching_actions = []
+        for action in self.get_all_actions():
+            for keyword in keywords:
+                if any(
+                    keyword.lower() in action_keyword.lower()
+                    for action_keyword in action.keywords
+                ):
+                    matching_actions.append(action)
+                    break
+        return matching_actions
+
+
 class SpokeRegistry:
     """スポークの登録と管理を行うレジストリ"""
 
     def __init__(self):
         self._spokes: Dict[str, Type[BaseSpoke]] = {}
-        self._spoke_configs: Dict[str, dict] = {}
+        self._spoke_configs: Dict[str, SpokeConfig] = {}
         self.logger = AIAssistantLogger("spoke_registry")
 
     def register_spoke(
-        self, spoke_name: str, spoke_class: Type[BaseSpoke], config: dict
+        self, spoke_name: str, spoke_class: Type[BaseSpoke], config: SpokeConfig
     ):
         """スポークを登録"""
         self._spokes[spoke_name] = spoke_class
@@ -34,7 +154,7 @@ class SpokeRegistry:
         """スポーククラスを取得"""
         return self._spokes.get(spoke_name)
 
-    def get_spoke_config(self, spoke_name: str) -> Optional[dict]:
+    def get_spoke_config(self, spoke_name: str) -> Optional[SpokeConfig]:
         """スポーク設定を取得"""
         return self._spoke_configs.get(spoke_name)
 
@@ -42,7 +162,7 @@ class SpokeRegistry:
         """すべてのスポークを取得"""
         return self._spokes.copy()
 
-    def get_all_configs(self) -> Dict[str, dict]:
+    def get_all_configs(self) -> Dict[str, SpokeConfig]:
         """すべてのスポーク設定を取得"""
         return self._spoke_configs.copy()
 
@@ -50,12 +170,29 @@ class SpokeRegistry:
         """アクションタイプからスポーク名へのマッピングを取得"""
         mapping = {}
         for spoke_name, config in self._spoke_configs.items():
-            if "actions" in config:
-                for action in config["actions"]:
-                    action_type = action.get("action_type")
-                    if action_type:
-                        mapping[action_type] = spoke_name
+            for action in config.actions:
+                mapping[action.action_type] = spoke_name
         return mapping
+
+    def get_all_actions(self) -> List[ActionDefinition]:
+        """すべてのスポークからアクション定義を取得"""
+        all_actions = []
+        for config in self._spoke_configs.values():
+            all_actions.extend(config.actions)
+        return all_actions
+
+    def get_actions_by_keywords(self, keywords: List[str]) -> List[ActionDefinition]:
+        """キーワードに基づいてアクションを検索"""
+        matching_actions = []
+        for action in self.get_all_actions():
+            for keyword in keywords:
+                if any(
+                    keyword.lower() in action_keyword.lower()
+                    for action_keyword in action.keywords
+                ):
+                    matching_actions.append(action)
+                    break
+        return matching_actions
 
 
 class DynamicSpokeLoader:
@@ -63,6 +200,7 @@ class DynamicSpokeLoader:
 
     def __init__(self, spokes_directory: str):
         self.spokes_directory = spokes_directory
+        self.config_loader = SpokeConfigLoader(spokes_directory)
         self.registry = SpokeRegistry()
         self.logger = AIAssistantLogger("spoke_loader")
 
@@ -72,31 +210,25 @@ class DynamicSpokeLoader:
             self.logger.warning(f"Spokes directory not found: {self.spokes_directory}")
             return self.registry
 
-        for item in os.listdir(self.spokes_directory):
-            spoke_path = os.path.join(self.spokes_directory, item)
-            if os.path.isdir(spoke_path) and not item.startswith("__"):
-                self._load_spoke(item, spoke_path)
+        # 設定を読み込み
+        configs = self.config_loader.load_all_spokes()
+
+        # 各スポークについてクラスを読み込み
+        for spoke_name, config in configs.items():
+            spoke_path = os.path.join(self.spokes_directory, spoke_name)
+            if os.path.isdir(spoke_path):
+                self._load_spoke(spoke_name, spoke_path, config)
 
         return self.registry
 
-    def _load_spoke(self, spoke_name: str, spoke_path: str):
+    def _load_spoke(self, spoke_name: str, spoke_path: str, config: SpokeConfig):
         """個別のスポークを読み込み"""
         try:
-            # actions.json を読み込み
-            actions_file = os.path.join(spoke_path, "actions.json")
             spoke_file = os.path.join(spoke_path, "spoke.py")
-
-            if not os.path.exists(actions_file):
-                self.logger.warning(f"actions.json not found for spoke: {spoke_name}")
-                return
 
             if not os.path.exists(spoke_file):
                 self.logger.warning(f"spoke.py not found for spoke: {spoke_name}")
                 return
-
-            # 設定を読み込み
-            with open(actions_file, "r", encoding="utf-8") as f:
-                config = json.load(f)
 
             # スポーククラスを動的にインポート
             spoke_class = self._import_spoke_class(spoke_file, spoke_name)
@@ -214,6 +346,14 @@ class DynamicSpokeManager:
         """すべてのサポートされているアクションタイプを取得"""
         return list(self._action_to_spoke.keys())
 
-    def get_spoke_configs(self) -> Dict[str, dict]:
+    def get_spoke_configs(self) -> Dict[str, SpokeConfig]:
         """すべてのスポーク設定を取得"""
         return self.registry.get_all_configs()
+
+    def get_all_actions(self) -> List[ActionDefinition]:
+        """すべてのアクション定義を取得"""
+        return self.registry.get_all_actions()
+
+    def get_actions_by_keywords(self, keywords: List[str]) -> List[ActionDefinition]:
+        """キーワードに基づいてアクションを検索"""
+        return self.registry.get_actions_by_keywords(keywords)

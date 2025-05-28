@@ -12,7 +12,7 @@ from .models import (
     OperatorResponse,
     SpokeResponse,
 )
-from .spokes.spoke_loader import DynamicSpokeManager
+from .spokes.spoke_system import DynamicSpokeManager
 
 
 class ActionExecutor:

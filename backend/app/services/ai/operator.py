@@ -10,8 +10,7 @@ from .exceptions import InvalidParameterError, PromptAnalysisError
 from .logger import AIAssistantLogger
 from .models import ActionType, NextAction, OperatorResponse
 from .prompt_generator import DynamicPromptGenerator
-from .spokes.spoke_config import SpokeConfigLoader
-from .spokes.spoke_loader import DynamicSpokeManager
+from .spokes.spoke_system import DynamicSpokeManager, SpokeConfigLoader
 
 # OpenAI APIクライアントの初期化
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
