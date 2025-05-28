@@ -12,14 +12,19 @@ class AIOrchestrator:
     """AIアシスタントのオーケストレーター（統合レイヤー）"""
 
     def __init__(
-        self, encryption_key: Optional[str] = None, session: Optional[Session] = None
+        self,
+        encryption_key: Optional[str] = None,
+        session: Optional[Session] = None,
     ):
         self.encryption_key = encryption_key or os.getenv("ENCRYPTION_KEY", "")
         self.session = session
         self.operator_hub = OperatorHub(self.encryption_key, session)
 
     async def process_request(
-        self, prompt: str, max_tokens: int = 1000, temperature: float = 0.7
+        self,
+        prompt: str,
+        max_tokens: int = 1000,
+        temperature: float = 0.7,
     ) -> Dict[str, Any]:
         """ユーザーリクエストを処理して結果を返す
 
