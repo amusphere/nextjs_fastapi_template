@@ -1,33 +1,13 @@
-from typing import Optional
-
+from app.models.ai_assistant import AIRequestModel, AIResponseModel
 from app.schema import User
 from app.services.auth import auth_user
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
 from sqlmodel import Session
 
 from ...database import get_session
 from ...services.ai.orchestrator import process_ai_request
 
 router = APIRouter(prefix="/ai", tags=["AI Assistant"])
-
-
-class AIRequestModel(BaseModel):
-    """AIリクエストモデル"""
-
-    prompt: str
-    max_tokens: Optional[int] = 1000
-    temperature: Optional[float] = 0.7
-
-
-class AIResponseModel(BaseModel):
-    """AIレスポンスモデル"""
-
-    success: bool
-    operator_response: Optional[dict] = None
-    execution_results: list = []
-    summary: dict
-    error: Optional[str] = None
 
 
 @router.post("/process", response_model=AIResponseModel)
