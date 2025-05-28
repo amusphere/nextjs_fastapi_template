@@ -1,21 +1,11 @@
-from enum import Enum
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 
 
-class ActionType(str, Enum):
-    """利用可能なアクションタイプ"""
-    GET_CALENDAR_EVENTS = "get_calendar_events"
-    CREATE_CALENDAR_EVENT = "create_calendar_event"
-    UPDATE_CALENDAR_EVENT = "update_calendar_event"
-    DELETE_CALENDAR_EVENT = "delete_calendar_event"
-    UNKNOWN = "unknown"
-
-
 class NextAction(BaseModel):
     """次に実行すべきアクション"""
-    action_type: ActionType
+    action_type: str  # 動的にスポークから読み込まれるアクションタイプ
     parameters: Dict[str, Any]
     priority: int = 1  # 1が最高優先度
     description: str  # アクションの説明

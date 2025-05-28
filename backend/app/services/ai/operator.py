@@ -8,7 +8,7 @@ from sqlmodel import Session
 
 from .exceptions import InvalidParameterError, PromptAnalysisError
 from .logger import AIAssistantLogger
-from .models import ActionType, NextAction, OperatorResponse
+from .models import NextAction, OperatorResponse
 from .prompt_generator import DynamicPromptGenerator
 from .spokes.spoke_system import DynamicSpokeManager, SpokeConfigLoader
 
@@ -87,8 +87,9 @@ class OperatorHub:
             for action_data in response_data.get("actions", []):
                 try:
                     action_type_str = action_data.get("action_type", "unknown")
-                    # ActionTypeの検証
-                    if action_type_str not in [e.value for e in ActionType]:
+                    # 動的スポークシステムで有効なアクションタイプかどうかをチェック
+                    supported_actions = self.spoke_manager.get_all_supported_actions()
+                    if action_type_str not in supported_actions and action_type_str != "unknown":
                         self.logger.log_error(
                             InvalidParameterError(
                                 f"Unknown action type: {action_type_str}"
@@ -98,7 +99,7 @@ class OperatorHub:
                         action_type_str = "unknown"
 
                     action = NextAction(
-                        action_type=ActionType(action_type_str),
+                        action_type=action_type_str,
                         parameters=action_data.get("parameters", {}),
                         priority=action_data.get("priority", 1),
                         description=action_data.get("description", ""),
@@ -135,7 +136,7 @@ class OperatorHub:
             return OperatorResponse(
                 actions=[
                     NextAction(
-                        action_type=ActionType.UNKNOWN,
+                        action_type="unknown",
                         parameters={},
                         description=f"JSONパースエラー: {str(e)}",
                     )
@@ -148,7 +149,7 @@ class OperatorHub:
             return OperatorResponse(
                 actions=[
                     NextAction(
-                        action_type=ActionType.UNKNOWN,
+                        action_type="unknown",
                         parameters={},
                         description=str(e),
                     )
@@ -164,7 +165,7 @@ class OperatorHub:
             return OperatorResponse(
                 actions=[
                     NextAction(
-                        action_type=ActionType.UNKNOWN,
+                        action_type="unknown",
                         parameters={},
                         description=f"エラー: {str(e)}",
                     )
