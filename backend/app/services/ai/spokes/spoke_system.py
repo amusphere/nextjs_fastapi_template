@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
 
+from clerk_backend_api import NextAction
+
 from app.services.ai.logger import AIAssistantLogger
 from app.services.ai.models import SpokeResponse
 from app.services.ai.spokes.spoke_interface import BaseSpoke
@@ -273,16 +275,13 @@ class DynamicSpokeManager:
             self.logger.error(f"Failed to instantiate spoke {spoke_name}: {str(e)}")
             return None
 
-    async def execute_action(
-        self,
-        action_type: str,
-        parameters: dict[str, Any],
-    ) -> SpokeResponse:
+    async def execute_action(self, action: NextAction) -> SpokeResponse:
         """アクションを実行"""
-        spoke_name = self._action_to_spoke.get(action_type)
+        spoke_name = self._action_to_spoke.get(action.action_type)
         if spoke_name is None:
             return SpokeResponse(
-                success=False, error=f"No spoke found for action type: {action_type}"
+                success=False,
+                error=f"No spoke found for action type: {action.action_type}",
             )
 
         spoke_instance = self.get_spoke_instance(spoke_name)
@@ -291,10 +290,13 @@ class DynamicSpokeManager:
                 success=False, error=f"Failed to get spoke instance for: {spoke_name}"
             )
 
+        # アクションパラメータを辞書に変換
+        parameters = action.get_parameters_dict()
+
         try:
-            return await spoke_instance.execute_action(action_type, parameters)
+            return await spoke_instance.execute_action(action.action_type, parameters)
         except Exception as e:
-            self.logger.error(f"Error executing action {action_type}: {str(e)}")
+            self.logger.error(f"Error executing action {action.action_type}: {str(e)}")
             return SpokeResponse(success=False, error=f"Execution error: {str(e)}")
 
     def get_all_supported_actions(self) -> List[str]:

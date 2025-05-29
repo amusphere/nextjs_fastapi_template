@@ -25,13 +25,8 @@ class ActionExecutor:
         self.logger.log_action_execution(next_action=action)
 
         try:
-            # パラメータを辞書に変換
-            parameters_dict = action.get_parameters_dict()
-
             # 動的スポークマネージャーを使用してアクションを実行
-            result = await self.spoke_manager.execute_action(
-                action.action_type, parameters_dict
-            )
+            result = await self.spoke_manager.execute_action(action.action_type)
             return result
         except Exception as e:
             error = ActionExecutionError(f"Execution error: {str(e)}")
