@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Type
 
 from app.services.ai.logger import AIAssistantLogger
-from app.services.ai.models import ParameterPredictionRequest, SpokeResponse
+from app.services.ai.models import SpokeResponse
 from app.services.ai.spokes.spoke_interface import BaseSpoke
 from app.services.llm import predict_parameters
 from clerk_backend_api import NextAction
@@ -303,28 +303,32 @@ class DynamicSpokeManager:
 
         # LLMにパラメータ推測を依頼
         try:
-            prediction_request = ParameterPredictionRequest(
-                spoke_name=action.spoke_name,
+            predicted_parameters = await predict_parameters(
+                spoke_name=spoke_name,
                 action_type=action.action_type,
                 description=action.description,
-                parameters=action.parameters,
+                parameters=parameters,
                 action_definition=action_definition,
             )
 
-            prediction_response = await predict_parameters(prediction_request)
-
-            # 推測されたパラメータをマージ（既存のパラメータを優先）
-            parameters = prediction_response.predicted_parameters
-
-            self.logger.info(
-                f"Predicted parameters for {action.spoke_name}.{action.action_type}: {parameters}"
-            )
+            if predicted_parameters:
+                # 推測されたパラメータを使用
+                parameters = predicted_parameters
+            else:
+                # 推測が空の場合は元のパラメータを使用
+                self.logger.warning(
+                    f"No parameters predicted for {action.action_type}, using original parameters."
+                )
 
         except Exception as e:
             # パラメータ推測に失敗した場合は元のパラメータを使用
             self.logger.warning(
                 f"Parameter prediction failed for {action.action_type}: {str(e)}"
             )
+
+        self.logger.info(
+            f"Executing action {action.spoke_name}.{action.action_type} with parameters: {json.dumps(parameters, ensure_ascii=False)}"
+        )
 
         try:
             return await spoke_instance.execute_action(action.action_type, parameters)

@@ -49,25 +49,3 @@ class SpokeResponse(BaseModel):
     data: Optional[Any] = None
     error: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
-
-
-class ParameterPredictionRequest(BaseModel):
-    """LLMにパラメータ推測を依頼するリクエスト"""
-
-    model_config = ConfigDict(extra="forbid")
-
-    spoke_name: str
-    action_type: str
-    description: str
-    parameters: str  # 現在のパラメータ（JSON文字列）
-    action_definition: Dict[str, Any]  # actions.jsonから取得したアクション定義
-
-
-class ParameterPredictionResponse(BaseModel):
-    """LLMからのパラメータ推測レスポンス"""
-
-    model_config = ConfigDict(extra="forbid")
-
-    predicted_parameters: Dict[str, Any]
-    reasoning: str  # 推測の理由
-    confidence: float = Field(ge=0.0, le=1.0)  # 推測の信頼度

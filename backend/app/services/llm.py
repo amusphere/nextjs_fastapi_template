@@ -2,10 +2,6 @@ import json
 import os
 
 import openai
-from app.services.ai.models import (
-    ParameterPredictionRequest,
-    ParameterPredictionResponse,
-)
 
 # OpenAI APIのモデル名
 model = "gpt-4.1"
@@ -15,14 +11,18 @@ client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 async def predict_parameters(
-    request: ParameterPredictionRequest,
-) -> ParameterPredictionResponse:
+    spoke_name: str,
+    action_type: str,
+    description: str,
+    parameters: dict,
+    action_definition: dict,
+) -> dict:
     """
     LLMにパラメータの推測を依頼する
     """
     try:
         # パラメータスキーマを作成
-        parameters_schema = request.action_definition.get("parameters", {})
+        parameters_schema = action_definition.get("parameters", {})
 
         # プロンプトを構築
         prompt = f"""
@@ -30,13 +30,13 @@ async def predict_parameters(
 
 以下の情報を基に、アクションに必要なパラメータを推測してください：
 
-**スポーク名**: {request.spoke_name}
-**アクションタイプ**: {request.action_type}
-**ユーザーの説明**: {request.description}
-**現在のパラメータ**: {request.parameters}
+**スポーク名**: {spoke_name}
+**アクションタイプ**: {action_type}
+**ユーザーの説明**: {description}
+**現在のパラメータ**: {parameters}
 
 **アクション定義**:
-{json.dumps(request.action_definition, indent=2, ensure_ascii=False)}
+{json.dumps(action_definition, indent=2, ensure_ascii=False)}
 
 **必要なパラメータスキーマ**:
 {json.dumps(parameters_schema, indent=2, ensure_ascii=False)}
@@ -48,8 +48,6 @@ async def predict_parameters(
         // 必須パラメータは必ず含める
         // オプションパラメータは適切と思われる場合のみ含める
     }},
-    "reasoning": "パラメータを推測した理由を詳しく説明",
-    "confidence": 0.85 // 推測の信頼度（0.0-1.0）
 }}
 
 注意事項：
@@ -75,22 +73,9 @@ async def predict_parameters(
 
         # JSONレスポンスをパース
         response_content = response.choices[0].message.content
+        parsed_response = json.loads(response_content)
 
-        try:
-            parsed_response = json.loads(response_content)
-
-            return ParameterPredictionResponse(
-                predicted_parameters=parsed_response.get("predicted_parameters", {}),
-                reasoning=parsed_response.get("reasoning", ""),
-                confidence=parsed_response.get("confidence", 0.5),
-            )
-        except json.JSONDecodeError:
-            # JSONパースに失敗した場合は、空のパラメータで返す
-            return ParameterPredictionResponse(
-                predicted_parameters={},
-                reasoning=f"LLMレスポンスのJSONパースに失敗: {response_content}",
-                confidence=0.0,
-            )
+        return parsed_response.get("predicted_parameters", {})
 
     except Exception as e:
         raise Exception(f"Failed to predict parameters: {str(e)}")
