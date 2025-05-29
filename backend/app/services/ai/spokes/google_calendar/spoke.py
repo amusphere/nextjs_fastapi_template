@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
+from zoneinfo import ZoneInfo
 
 from app.services.ai.models import SpokeResponse
 from app.services.ai.spokes.spoke_interface import BaseSpoke
@@ -126,18 +127,24 @@ class GoogleCalendarSpoke(BaseSpoke):
             calendar_id = parameters.get("calendar_id", "primary")
 
             # イベントデータを構築
+            start_dt = datetime.fromisoformat(parameters["start_time"])
+            end_dt = datetime.fromisoformat(parameters["end_time"])
+
+            # タイムゾーンが設定されていない場合は日本時間として扱う
+            jst = ZoneInfo("Asia/Tokyo")
+            if start_dt.tzinfo is None:
+                start_dt = start_dt.replace(tzinfo=jst)
+            if end_dt.tzinfo is None:
+                end_dt = end_dt.replace(tzinfo=jst)
+
             event_body = {
                 "summary": parameters["summary"],
                 "start": {
-                    "dateTime": datetime.fromisoformat(
-                        parameters["start_time"]
-                    ).isoformat(),
+                    "dateTime": start_dt.isoformat(),
                     "timeZone": "Asia/Tokyo",
                 },
                 "end": {
-                    "dateTime": datetime.fromisoformat(
-                        parameters["end_time"]
-                    ).isoformat(),
+                    "dateTime": end_dt.isoformat(),
                     "timeZone": "Asia/Tokyo",
                 },
             }
@@ -198,15 +205,23 @@ class GoogleCalendarSpoke(BaseSpoke):
             )
 
             # イベントデータを更新
+            start_dt = datetime.fromisoformat(parameters["start_time"])
+            end_dt = datetime.fromisoformat(parameters["end_time"])
+
+            # タイムゾーンが設定されていない場合は日本時間として扱う
+            jst = ZoneInfo("Asia/Tokyo")
+            if start_dt.tzinfo is None:
+                start_dt = start_dt.replace(tzinfo=jst)
+            if end_dt.tzinfo is None:
+                end_dt = end_dt.replace(tzinfo=jst)
+
             existing_event["summary"] = parameters["summary"]
             existing_event["start"] = {
-                "dateTime": datetime.fromisoformat(
-                    parameters["start_time"]
-                ).isoformat(),
+                "dateTime": start_dt.isoformat(),
                 "timeZone": "Asia/Tokyo",
             }
             existing_event["end"] = {
-                "dateTime": datetime.fromisoformat(parameters["end_time"]).isoformat(),
+                "dateTime": end_dt.isoformat(),
                 "timeZone": "Asia/Tokyo",
             }
 

@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 import openai
 from sqlmodel import Session
@@ -55,7 +56,9 @@ class OperatorHub:
 
     def generate_system_prompt(self) -> str:
         """システムプロンプトを動的に生成"""
-        current_time = datetime.now().isoformat()
+        # 日本時間で現在時刻を取得
+        jst = ZoneInfo("Asia/Tokyo")
+        current_time = datetime.now(jst).isoformat()
 
         # 利用可能なアクションのリストを生成
         actions_list = self._generate_actions_list()
@@ -66,7 +69,7 @@ class OperatorHub:
 利用可能なアクション:
 {actions_list}
 
-現在の日時: {current_time} (UTC)
+現在の日時: {current_time} (JST)
 ユーザーID: {self.user_id}
 
 ## 重要な指示:
