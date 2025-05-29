@@ -3,17 +3,31 @@ import os
 from datetime import datetime
 from typing import Optional
 
+import requests
+from app.models.google_oauth import GoogleCallbackRequest
 from app.repositories import google_oauth_token
 from app.schema import GoogleOAuthToken
 from cryptography.fernet import Fernet
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
 from sqlmodel import Session
 
-# 環境変数から取得
+# Google OAuth設定
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.getenv(
+    "GOOGLE_REDIRECT_URI", "http://localhost:3000/api/auth/google/callback"
+)
 ENCRYPTION_KEY = os.getenv("GOOGLE_OAUTH_ENCRYPTION_KEY")
+
+# Google Calendar API のスコープ
+SCOPES = [
+    "openid",  # Google が自動で追加するため明示的に含める
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+]
 
 
 class GoogleOauthService:
@@ -28,13 +42,86 @@ class GoogleOauthService:
             self.fernet = Fernet(ENCRYPTION_KEY.encode())
         self.session = session
 
-    def encrypt_token(self, token: str) -> str:
+    def _encrypt_token(self, token: str) -> str:
         """トークンを暗号化"""
         return self.fernet.encrypt(token.encode()).decode()
 
-    def decrypt_token(self, encrypted_token: str) -> str:
+    def _decrypt_token(self, encrypted_token: str) -> str:
         """トークンを復号化"""
         return self.fernet.decrypt(encrypted_token.encode()).decode()
+
+    def get_auth_url(self, user_id: int) -> str:
+        """Google OAuth認証URLを生成"""
+        flow = Flow.from_client_config(
+            {
+                "web": {
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "redirect_uris": [GOOGLE_REDIRECT_URI],
+                }
+            },
+            scopes=SCOPES,
+        )
+        flow.redirect_uri = GOOGLE_REDIRECT_URI
+
+        # ユーザーIDをstateに含める
+        auth_url, _ = flow.authorization_url(
+            access_type="offline",
+            include_granted_scopes="true",
+            state=str(user_id),
+        )
+
+        return auth_url
+
+    def get_user_info(self, credentials: Credentials) -> dict:
+        """OAuth2 userinfo エンドポイントを使用してユーザー情報を取得"""
+        userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+
+        headers = {"Authorization": f"Bearer {credentials.token}"}
+        response = requests.get(userinfo_url, headers=headers)
+
+        if response.status_code != 200:
+            raise Exception(
+                f"Failed to fetch user info: {response.status_code} {response.text}"
+            )
+
+        return response.json()
+
+    def save_oauth_tokens(self, callback_request: GoogleCallbackRequest):
+        """認証コードをアクセストークンに交換し、データベースに保存"""
+        user_id = int(callback_request.state)
+        code = callback_request.code
+
+        flow = Flow.from_client_config(
+            {
+                "web": {
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "redirect_uris": [GOOGLE_REDIRECT_URI],
+                }
+            },
+            scopes=SCOPES,
+        )
+        flow.redirect_uri = GOOGLE_REDIRECT_URI
+
+        # 認証コードでトークンを取得
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
+
+        # OAuth2 userinfo エンドポイントを使用してユーザー情報を取得
+        user_info = self.get_user_info(credentials)
+
+        # トークンをデータベースに保存
+        self.store_oauth_tokens(
+            user_id=user_id,
+            credentials=credentials,
+            google_user_id=user_info.get("id"),
+            google_email=user_info.get("email"),
+        )
 
     def store_oauth_tokens(
         self,
@@ -50,9 +137,9 @@ class GoogleOauthService:
 
         return google_oauth_token.upsert_oauth_token(
             user_id=user_id,
-            access_token=self.encrypt_token(credentials.token),
+            access_token=self._encrypt_token(credentials.token),
             refresh_token=(
-                self.encrypt_token(credentials.refresh_token)
+                self._encrypt_token(credentials.refresh_token)
                 if credentials.refresh_token
                 else None
             ),
@@ -73,10 +160,10 @@ class GoogleOauthService:
             return None
 
         # 復号化してCredentialsオブジェクトを作成
-        access_token = self.decrypt_token(oauth_token.access_token)
+        access_token = self._decrypt_token(oauth_token.access_token)
         refresh_token = None
         if oauth_token.refresh_token:
-            refresh_token = self.decrypt_token(oauth_token.refresh_token)
+            refresh_token = self._decrypt_token(oauth_token.refresh_token)
 
         credentials = Credentials(
             token=access_token,
@@ -105,9 +192,9 @@ class GoogleOauthService:
 
         google_oauth_token.update_token_data(
             token_id=token_id,
-            access_token=self.encrypt_token(credentials.token),
+            access_token=self._encrypt_token(credentials.token),
             refresh_token=(
-                self.encrypt_token(credentials.refresh_token)
+                self._encrypt_token(credentials.refresh_token)
                 if credentials.refresh_token
                 else None
             ),
