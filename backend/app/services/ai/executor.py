@@ -1,4 +1,3 @@
-import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -24,8 +23,6 @@ class ActionExecutor:
 
     async def execute_action(self, action: NextAction) -> SpokeResponse:
         """個別のアクションを実行"""
-        start_time = time.time()
-
         try:
             # 動的スポークマネージャーを使用してアクションを実行
             result = await self.spoke_manager.execute_action(
@@ -33,26 +30,24 @@ class ActionExecutor:
             )
 
             # ログ記録
-            duration = time.time() - start_time
             self.logger.log_action_execution(
+                spoke_name=action.spoke_name,
                 action_type=action.action_type,
                 user_id=action.parameters.user_id or 0,
                 success=result.success,
-                duration=duration,
                 error=result.error if not result.success else None,
             )
 
             return result
 
         except Exception as e:
-            duration = time.time() - start_time
             error = ActionExecutionError(f"Execution error: {str(e)}")
             self.logger.log_error(
                 error,
                 {
+                    "spoke_name": action.spoke_name,
                     "action_type": action.action_type,
                     "user_id": action.parameters.user_id or 0,
-                    "duration": duration,
                 },
             )
             return SpokeResponse(success=False, error=str(error))

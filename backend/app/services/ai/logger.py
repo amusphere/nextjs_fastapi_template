@@ -25,20 +25,20 @@ class AIAssistantLogger:
 
     def log_action_execution(
         self,
+        spoke_name: str,
         action_type: str,
         user_id: int,
         success: bool,
-        duration: float = None,
         error: str = None,
     ):
         """アクション実行のログ"""
         status = "SUCCESS" if success else "FAILED"
         log_message = (
-            f"Action execution {status} - " f"Type: {action_type}, " f"User: {user_id}"
+            f"Action execution {status} - "
+            f"Spoke: {spoke_name}, "
+            f"Type: {action_type}, "
+            f"User: {user_id}"
         )
-
-        if duration:
-            log_message += f", Duration: {duration:.2f}s"
 
         if error:
             log_message += f", Error: {error}"

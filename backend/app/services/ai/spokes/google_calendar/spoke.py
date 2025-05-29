@@ -14,10 +14,18 @@ class GoogleCalendarSpoke(BaseSpoke):
 
     def __init__(self, session: Optional[Session] = None):
         super().__init__(session=session)
-        self.oauth_service = GoogleOauthService(session)
+        try:
+            self.oauth_service = GoogleOauthService(session)
+        except ValueError as e:
+            # 環境変数が設定されていない場合の処理
+            self.oauth_service = None
+            self._initialization_error = str(e)
 
     def _get_calendar_service(self, user_id: int):
         """Google Calendar APIサービスを取得"""
+        if self.oauth_service is None:
+            raise ValueError(f"Google OAuth Service initialization failed: {getattr(self, '_initialization_error', 'Unknown error')}")
+
         credentials = self.oauth_service.get_credentials(user_id)
         if not credentials:
             raise ValueError("Google認証情報が見つかりません")

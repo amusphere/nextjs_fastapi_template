@@ -32,6 +32,14 @@ SCOPES = [
 
 class GoogleOauthService:
     def __init__(self, session: Session | None = None):
+        # 環境変数のチェック
+        if not ENCRYPTION_KEY:
+            raise ValueError("GOOGLE_OAUTH_ENCRYPTION_KEY environment variable is required")
+        if not GOOGLE_CLIENT_ID:
+            raise ValueError("GOOGLE_CLIENT_ID environment variable is required")
+        if not GOOGLE_CLIENT_SECRET:
+            raise ValueError("GOOGLE_CLIENT_SECRET environment variable is required")
+
         # Convert hex string to bytes, then base64 encode for Fernet
         if len(ENCRYPTION_KEY) == 64:  # Hex string (32 bytes * 2)
             key_bytes = bytes.fromhex(ENCRYPTION_KEY)
