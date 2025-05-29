@@ -6,6 +6,8 @@ import json
 import logging
 from typing import Any, Dict
 
+from app.services.ai.models import NextAction
+
 
 class AIAssistantLogger:
     """AIアシスタント専用ロガー"""
@@ -25,9 +27,7 @@ class AIAssistantLogger:
 
     def log_action_execution(
         self,
-        spoke_name: str,
-        action_type: str,
-        user_id: int,
+        next_action: NextAction,
         success: bool,
         error: str = None,
     ):
@@ -35,9 +35,9 @@ class AIAssistantLogger:
         status = "SUCCESS" if success else "FAILED"
         log_message = (
             f"Action execution {status} - "
-            f"Spoke: {spoke_name}, "
-            f"Type: {action_type}, "
-            f"User: {user_id}"
+            f"Spoke: {next_action.spoke_name}, "
+            f"Type: {next_action.action_type}, "
+            f"User: {next_action.parameters.user_id or 'unknown'}, "
         )
 
         if error:

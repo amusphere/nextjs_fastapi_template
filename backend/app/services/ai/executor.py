@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from sqlmodel import Session
 
@@ -7,7 +6,6 @@ from .exceptions import ActionExecutionError
 from .logger import AIAssistantLogger
 from .models import (
     NextAction,
-    OperatorResponse,
     SpokeResponse,
 )
 from .spokes.spoke_system import DynamicSpokeManager
@@ -31,9 +29,7 @@ class ActionExecutor:
 
             # ログ記録
             self.logger.log_action_execution(
-                spoke_name=action.spoke_name,
-                action_type=action.action_type,
-                user_id=action.parameters.user_id or 0,
+                next_action=action,
                 success=result.success,
                 error=result.error if not result.success else None,
             )
@@ -67,35 +63,3 @@ class ActionExecutor:
                 break
 
         return results
-
-    def _validate_required_params(
-        self, parameters: Dict[str, Any], required_fields: List[str]
-    ) -> Optional[str]:
-        """必須パラメータを検証"""
-        missing_fields = [
-            field for field in required_fields if not parameters.get(field)
-        ]
-        if missing_fields:
-            return f"Required fields missing: {', '.join(missing_fields)}"
-        return None
-
-    def _parse_datetime(self, datetime_str: str) -> datetime:
-        """日時文字列をdatetimeオブジェクトに変換"""
-        return datetime.fromisoformat(datetime_str.replace("Z", "+00:00"))
-
-
-async def execute_operator_response(
-    operator_response: OperatorResponse,
-    session: Optional[Session] = None,
-) -> List[SpokeResponse]:
-    """オペレーターレスポンスに基づいてアクションを実行
-
-    Args:
-        operator_response: オペレーターからの応答
-        session: データベースセッション
-
-    Returns:
-        List[SpokeResponse]: 各アクションの実行結果
-    """
-    executor = ActionExecutor(session)
-    return await executor.execute_actions(operator_response.actions)

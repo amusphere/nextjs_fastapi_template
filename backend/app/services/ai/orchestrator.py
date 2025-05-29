@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from sqlmodel import Session
 
-from .executor import execute_operator_response
+from .executor import ActionExecutor
 from .models import OperatorResponse, SpokeResponse
 from .operator import OperatorHub
 
@@ -41,9 +41,9 @@ class AIOrchestrator:
             )
 
             # Step 2: アクション計画を実行
-            execution_results: List[SpokeResponse] = await execute_operator_response(
-                operator_response=operator_response,
-                session=self.session,
+            executor = ActionExecutor(self.session)
+            execution_results: List[SpokeResponse] = await executor.execute_actions(
+                operator_response.actions
             )
 
             # Step 3: 実行結果をサマリー
