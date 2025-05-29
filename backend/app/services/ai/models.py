@@ -1,6 +1,7 @@
+import json
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class NextAction(BaseModel):
@@ -10,9 +11,23 @@ class NextAction(BaseModel):
 
     spoke_name: str  # スポーク名
     action_type: str  # スポークのアクションタイプ
-    parameters: Dict[str, Any] = Field(default_factory=dict)  # アクションのパラメータ
+    parameters: str = Field(default="{}")  # アクションのパラメータ（JSON文字列）
     priority: int = Field(default=1, ge=1)  # 1が最高優先度
     description: str  # アクションの説明
+
+    @field_validator("parameters", mode="before")
+    @classmethod
+    def validate_parameters(cls, v):
+        if isinstance(v, dict):
+            return json.dumps(v)
+        return v
+
+    def get_parameters_dict(self) -> Dict[str, Any]:
+        """パラメータを辞書として取得"""
+        try:
+            return json.loads(self.parameters)
+        except json.JSONDecodeError:
+            return {}
 
 
 class OperatorResponse(BaseModel):

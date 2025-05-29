@@ -98,7 +98,7 @@ class OperatorHub:
             )
 
             # 構造化された応答を取得（Pydanticモデルとして自動的にパースされる）
-            operator_response = response.choices[0].parsed
+            operator_response = response.choices[0].message.parsed
 
             # LLMの応答をログに記録
             self.logger.info(response.choices[0].message.content)
