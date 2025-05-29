@@ -18,7 +18,8 @@ class GenericActionParameters(BaseModel):
 class NextAction(BaseModel):
     """次に実行すべきアクション"""
 
-    action_type: str  # 動的にスポークから読み込まれるアクションタイプ
+    spoke_name: str  # スポーク名
+    action_type: str  # スポークのアクションタイプ
     parameters: GenericActionParameters
     priority: int = Field(default=1, ge=1)  # 1が最高優先度
     description: str  # アクションの説明
