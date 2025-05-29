@@ -23,25 +23,6 @@ class AIAssistantLogger:
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
 
-    def log_prompt_analysis(
-        self,
-        prompt: str,
-        user_id: int,
-        confidence: float,
-        actions_count: int,
-        duration: float = None,
-    ):
-        """プロンプト解析のログ"""
-        self.logger.info(
-            f"Prompt analysis completed - "
-            f"User: {user_id}, "
-            f"Actions: {actions_count}, "
-            f"Confidence: {confidence:.2f}, "
-            f"Duration: {duration:.2f}s"
-            if duration
-            else "Duration: N/A"
-        )
-
     def log_action_execution(
         self,
         action_type: str,
@@ -61,28 +42,6 @@ class AIAssistantLogger:
 
         if error:
             log_message += f", Error: {error}"
-
-        if success:
-            self.logger.info(log_message)
-        else:
-            self.logger.error(log_message)
-
-    def log_calendar_operation(
-        self,
-        operation: str,
-        user_id: int,
-        event_count: int = None,
-        event_id: str = None,
-        success: bool = True,
-    ):
-        """カレンダー操作のログ"""
-        log_message = f"Calendar {operation} - User: {user_id}"
-
-        if event_count is not None:
-            log_message += f", Events: {event_count}"
-
-        if event_id:
-            log_message += f", EventID: {event_id}"
 
         if success:
             self.logger.info(log_message)
@@ -109,10 +68,6 @@ class AIAssistantLogger:
             log_message += f", Context: {json.dumps(context, default=str)}"
 
         self.logger.error(log_message, exc_info=True)
-
-    def log_performance_metrics(self, metrics: Dict[str, Any]):
-        """パフォーマンスメトリクスのログ"""
-        self.logger.info(f"Performance metrics: {json.dumps(metrics, default=str)}")
 
 
 # グローバルロガーインスタンス

@@ -7,7 +7,7 @@ from sqlmodel import Session
 
 from .exceptions import InvalidParameterError, PromptAnalysisError
 from .logger import AIAssistantLogger
-from .models import NextAction, OperatorResponse
+from .models import GenericActionParameters, NextAction, OperatorResponse
 from .prompt_generator import DynamicPromptGenerator
 from .spokes.spoke_system import DynamicSpokeManager, SpokeConfigLoader
 
@@ -15,7 +15,7 @@ from .spokes.spoke_system import DynamicSpokeManager, SpokeConfigLoader
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # モデルの指定
-model = "gpt-4o-mini"
+model = "gpt-4.1"
 
 
 class OperatorHub:
@@ -52,9 +52,6 @@ class OperatorHub:
         prompt: str,
     ) -> OperatorResponse:
         """プロンプトを解析してアクション計画を生成"""
-        import time
-
-        start_time = time.time()
 
         # プロンプトからuser_idを抽出
         user_id = self._extract_user_id(prompt)
@@ -73,28 +70,10 @@ class OperatorHub:
             )
 
             # 構造化された応答を取得（Pydanticモデルとして自動的にパースされる）
-            operator_response = response.content
+            operator_response = response.output_parsed
 
             # LLMの応答をログに記録
-            self.logger.log_info(
-                "LLM response received",
-                {
-                    "user_id": user_id,
-                    "model": response.model,
-                    "response_content": response.content,
-                    "token_usage": {
-                        "prompt_tokens": (
-                            response.usage.prompt_tokens if response.usage else None
-                        ),
-                        "completion_tokens": (
-                            response.usage.completion_tokens if response.usage else None
-                        ),
-                        "total_tokens": (
-                            response.usage.total_tokens if response.usage else None
-                        ),
-                    },
-                },
-            )
+            self.logger.info(response.output_text)
 
             # 動的スポークシステムで有効なアクションタイプかどうかをチェック
             supported_actions = self.spoke_manager.get_all_supported_actions()
@@ -111,18 +90,6 @@ class OperatorHub:
                     )
                     action.action_type = "unknown"
 
-            # パフォーマンス測定
-            duration = time.time() - start_time
-
-            # ログ記録
-            self.logger.log_prompt_analysis(
-                prompt=prompt,
-                user_id=user_id,
-                confidence=operator_response.confidence,
-                actions_count=len(operator_response.actions),
-                duration=duration,
-            )
-
             return operator_response
 
         except PromptAnalysisError as e:
@@ -131,7 +98,7 @@ class OperatorHub:
                 actions=[
                     NextAction(
                         action_type="unknown",
-                        parameters={},
+                        parameters=GenericActionParameters(),
                         description=str(e),
                     )
                 ],
@@ -147,7 +114,7 @@ class OperatorHub:
                 actions=[
                     NextAction(
                         action_type="unknown",
-                        parameters={},
+                        parameters=GenericActionParameters(),
                         description=f"エラー: {str(e)}",
                     )
                 ],

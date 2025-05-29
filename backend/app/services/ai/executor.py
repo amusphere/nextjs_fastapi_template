@@ -38,7 +38,7 @@ class ActionExecutor:
             duration = time.time() - start_time
             self.logger.log_action_execution(
                 action_type=action.action_type,
-                user_id=action.parameters.get("user_id", 0),
+                user_id=action.parameters.user_id or 0,
                 success=result.success,
                 duration=duration,
                 error=result.error if not result.success else None,
@@ -53,7 +53,7 @@ class ActionExecutor:
                 error,
                 {
                     "action_type": action.action_type,
-                    "user_id": action.parameters.get("user_id", 0),
+                    "user_id": action.parameters.user_id or 0,
                     "duration": duration,
                 },
             )

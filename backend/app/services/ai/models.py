@@ -1,23 +1,31 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field
+
+
+class GenericActionParameters(BaseModel):
+    user_id: int | None = None
+    event_id: str | None = None
+    summary: str | None = None
+    start_time: str | None = None
+    end_time: str | None = None
+    description: str | None = None
+    location: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
 
 
 class NextAction(BaseModel):
     """次に実行すべきアクション"""
 
-    model_config = ConfigDict(extra="forbid")
-
     action_type: str  # 動的にスポークから読み込まれるアクションタイプ
-    parameters: Dict[str, Any] = Field(default_factory=dict)
+    parameters: GenericActionParameters
     priority: int = Field(default=1, ge=1)  # 1が最高優先度
     description: str  # アクションの説明
 
 
 class OperatorResponse(BaseModel):
     """オペレーターからの応答"""
-
-    model_config = ConfigDict(extra="forbid")
 
     actions: List[NextAction]
     analysis: str  # プロンプト解析結果の説明
