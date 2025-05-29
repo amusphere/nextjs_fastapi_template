@@ -43,12 +43,8 @@ class GoogleCalendarSpoke(BaseSpoke):
         """カレンダーイベント取得アクション"""
         try:
             # パラメータから日付を解析
-            start_date = datetime.fromisoformat(
-                parameters["start_date"].replace("Z", "+00:00")
-            )
-            end_date = datetime.fromisoformat(
-                parameters["end_date"].replace("Z", "+00:00")
-            )
+            start_date = datetime.fromisoformat(parameters["start_date"])
+            end_date = datetime.fromisoformat(parameters["end_date"])
             calendar_id = parameters.get("calendar_id", "primary")
             max_results = parameters.get("max_results", 100)
 
@@ -93,8 +89,8 @@ class GoogleCalendarSpoke(BaseSpoke):
                     "id": event.get("id"),
                     "summary": event.get("summary", ""),
                     "description": event.get("description"),
-                    "start_time": datetime.fromisoformat(start.replace("Z", "+00:00")),
-                    "end_time": datetime.fromisoformat(end.replace("Z", "+00:00")),
+                    "start_time": datetime.fromisoformat(start),
+                    "end_time": datetime.fromisoformat(end),
                     "location": event.get("location"),
                     "attendees": attendees if attendees else None,
                     "recurrence": event.get("recurrence"),
@@ -134,13 +130,13 @@ class GoogleCalendarSpoke(BaseSpoke):
                 "summary": parameters["summary"],
                 "start": {
                     "dateTime": datetime.fromisoformat(
-                        parameters["start_time"].replace("Z", "+00:00")
+                        parameters["start_time"]
                     ).isoformat(),
                     "timeZone": "Asia/Tokyo",
                 },
                 "end": {
                     "dateTime": datetime.fromisoformat(
-                        parameters["end_time"].replace("Z", "+00:00")
+                        parameters["end_time"]
                     ).isoformat(),
                     "timeZone": "Asia/Tokyo",
                 },
@@ -205,14 +201,12 @@ class GoogleCalendarSpoke(BaseSpoke):
             existing_event["summary"] = parameters["summary"]
             existing_event["start"] = {
                 "dateTime": datetime.fromisoformat(
-                    parameters["start_time"].replace("Z", "+00:00")
+                    parameters["start_time"]
                 ).isoformat(),
                 "timeZone": "Asia/Tokyo",
             }
             existing_event["end"] = {
-                "dateTime": datetime.fromisoformat(
-                    parameters["end_time"].replace("Z", "+00:00")
-                ).isoformat(),
+                "dateTime": datetime.fromisoformat(parameters["end_time"]).isoformat(),
                 "timeZone": "Asia/Tokyo",
             }
 

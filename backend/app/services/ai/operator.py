@@ -66,12 +66,13 @@ class OperatorHub:
 利用可能なアクション:
 {actions_list}
 
-現在の日時: {current_time}
+現在の日時: {current_time} (UTC)
 ユーザーID: {self.user_id}
 
 ## 重要な指示:
 - parameters に user_id: {self.user_id} を必ず含めてください
 - 相対的な日時表現（「明日」「来週」「今日」「次の金曜日」など）は具体的な日時に変換してください
+- 基本的に日本時間（JST）で処理を行ってください
 - 時間が指定されていない場合は、適切なデフォルト時間を設定してください
 """
         return system_prompt
