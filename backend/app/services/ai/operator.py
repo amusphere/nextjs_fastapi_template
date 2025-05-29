@@ -14,7 +14,7 @@ from .spokes.spoke_system import DynamicSpokeManager, SpokeConfigLoader
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # モデルの指定
-model = "gpt-4o-2024-08-06"
+model = "gpt-4.1"
 
 
 class OperatorHub:
