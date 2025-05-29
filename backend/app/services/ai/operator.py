@@ -59,6 +59,9 @@ class OperatorHub:
         # 動的にシステムプロンプトを生成
         system_prompt = self.prompt_generator.generate_system_prompt(user_id)
 
+        # ログにシステムプロンプトを記録
+        self.logger.info(system_prompt)
+
         try:
             response = client.responses.parse(
                 model=model,

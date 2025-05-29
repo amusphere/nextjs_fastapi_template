@@ -7,14 +7,6 @@
       "action_type": "get_calendar_events",
       "display_name": "Get Calendar Events",
       "description": "カレンダーの予定を取得",
-      "keywords": [
-        "予定を確認",
-        "スケジュール",
-        "何がある",
-        "カレンダー",
-        "見る",
-        "表示"
-      ],
       "parameters": {
         "user_id": {
           "type": "integer",
@@ -35,25 +27,12 @@
           "description": "検索終了日時（ISO8601形式）",
           "default": "one_week_later"
         }
-      },
-      "examples": [
-        "今日の予定を教えて",
-        "明日のスケジュールは？",
-        "来週の予定を確認したい"
-      ]
+      }
     },
     {
       "action_type": "create_calendar_event",
       "display_name": "Create Calendar Event",
       "description": "カレンダーに新しい予定を作成",
-      "keywords": [
-        "予定を作成",
-        "登録",
-        "追加",
-        "予約",
-        "スケジュール",
-        "会議"
-      ],
       "parameters": {
         "user_id": {
           "type": "integer",
@@ -87,24 +66,12 @@
           "required": false,
           "description": "場所"
         }
-      },
-      "examples": [
-        "明日の10時から会議を予約して",
-        "来週の金曜日に歯医者の予定を追加",
-        "今日の午後2時から3時まで打ち合わせを登録"
-      ]
+      }
     },
     {
       "action_type": "update_calendar_event",
       "display_name": "Update Calendar Event",
       "description": "既存の予定を更新",
-      "keywords": [
-        "予定を変更",
-        "修正",
-        "更新",
-        "編集",
-        "時間変更"
-      ],
       "parameters": {
         "user_id": {
           "type": "integer",
@@ -143,24 +110,12 @@
           "required": false,
           "description": "場所"
         }
-      },
-      "examples": [
-        "明日の会議の時間を1時間後にずらして",
-        "今日の予定のタイトルを変更したい",
-        "金曜日の予定の場所を変更して"
-      ]
+      }
     },
     {
       "action_type": "delete_calendar_event",
       "display_name": "Delete Calendar Event",
       "description": "予定を削除",
-      "keywords": [
-        "予定を削除",
-        "キャンセル",
-        "消去",
-        "取り消し",
-        "削除"
-      ],
       "parameters": {
         "user_id": {
           "type": "integer",
@@ -172,30 +127,7 @@
           "required": true,
           "description": "削除する予定のID"
         }
-      },
-      "examples": [
-        "明日の会議をキャンセルして",
-        "今日の3時の予定を削除",
-        "金曜日の歯医者の予約を取り消し"
-      ]
+      }
     }
-  ],
-  "date_time_conversion_rules": {
-    "relative_expressions": {
-      "今日": "today",
-      "明日": "tomorrow",
-      "昨日": "yesterday",
-      "来週": "next_week",
-      "今週": "this_week",
-      "来月": "next_month",
-      "今月": "this_month"
-    },
-    "default_times": {
-      "morning": "09:00",
-      "afternoon": "14:00",
-      "evening": "18:00",
-      "night": "20:00"
-    },
-    "default_duration": "1hour"
-  }
+  ]
 }

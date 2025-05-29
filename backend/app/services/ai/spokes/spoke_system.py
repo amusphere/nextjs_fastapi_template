@@ -34,9 +34,7 @@ class ActionDefinition:
     action_type: str
     display_name: str
     description: str
-    keywords: List[str]
     parameters: Dict[str, ActionParameter]
-    examples: List[str]
 
 
 @dataclass
@@ -47,7 +45,6 @@ class SpokeConfig:
     display_name: str
     description: str
     actions: List[ActionDefinition]
-    date_time_conversion_rules: Optional[Dict[str, Any]] = None
 
 
 class SpokeConfigLoader:
@@ -95,9 +92,7 @@ class SpokeConfigLoader:
                 action_type=action_data.get("action_type", ""),
                 display_name=action_data.get("display_name", ""),
                 description=action_data.get("description", ""),
-                keywords=action_data.get("keywords", []),
                 parameters=parameters,
-                examples=action_data.get("examples", []),
             )
             actions.append(action)
 
@@ -106,7 +101,6 @@ class SpokeConfigLoader:
             display_name=data.get("display_name", ""),
             description=data.get("description", ""),
             actions=actions,
-            date_time_conversion_rules=data.get("date_time_conversion_rules"),
         )
 
     def get_spoke_config(self, spoke_name: str) -> Optional[SpokeConfig]:
@@ -119,19 +113,6 @@ class SpokeConfigLoader:
         for config in self._configs.values():
             all_actions.extend(config.actions)
         return all_actions
-
-    def get_actions_by_keywords(self, keywords: List[str]) -> List[ActionDefinition]:
-        """キーワードに基づいてアクションを検索"""
-        matching_actions = []
-        for action in self.get_all_actions():
-            for keyword in keywords:
-                if any(
-                    keyword.lower() in action_keyword.lower()
-                    for action_keyword in action.keywords
-                ):
-                    matching_actions.append(action)
-                    break
-        return matching_actions
 
 
 class SpokeRegistry:
@@ -180,19 +161,6 @@ class SpokeRegistry:
         for config in self._spoke_configs.values():
             all_actions.extend(config.actions)
         return all_actions
-
-    def get_actions_by_keywords(self, keywords: List[str]) -> List[ActionDefinition]:
-        """キーワードに基づいてアクションを検索"""
-        matching_actions = []
-        for action in self.get_all_actions():
-            for keyword in keywords:
-                if any(
-                    keyword.lower() in action_keyword.lower()
-                    for action_keyword in action.keywords
-                ):
-                    matching_actions.append(action)
-                    break
-        return matching_actions
 
 
 class DynamicSpokeLoader:
@@ -353,7 +321,3 @@ class DynamicSpokeManager:
     def get_all_actions(self) -> List[ActionDefinition]:
         """すべてのアクション定義を取得"""
         return self.registry.get_all_actions()
-
-    def get_actions_by_keywords(self, keywords: List[str]) -> List[ActionDefinition]:
-        """キーワードに基づいてアクションを検索"""
-        return self.registry.get_actions_by_keywords(keywords)
