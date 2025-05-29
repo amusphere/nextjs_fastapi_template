@@ -9,10 +9,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Type
 
+import openai
 from app.services.ai.logger import AIAssistantLogger
 from app.services.ai.models import SpokeResponse
 from app.services.ai.spokes.spoke_interface import BaseSpoke
-from app.services.llm import predict_parameters
 from clerk_backend_api import NextAction
 from sqlmodel import Session
 
@@ -247,6 +247,10 @@ class DynamicSpokeManager:
         self.session = session
         self.logger = AIAssistantLogger("spoke_manager")
 
+        # OpenAI設定
+        self.openai_model = "gpt-4.1"
+        self.openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
         # スポークを読み込み
         spokes_dir = os.path.dirname(__file__)  # spoke_system.pyと同じディレクトリ
         loader = DynamicSpokeLoader(spokes_dir)
@@ -303,7 +307,7 @@ class DynamicSpokeManager:
 
         # LLMにパラメータ推測を依頼
         try:
-            predicted_parameters = await predict_parameters(
+            predicted_parameters = await self.predict_parameters(
                 spoke_name=spoke_name,
                 action_type=action.action_type,
                 description=action.description,
@@ -335,6 +339,78 @@ class DynamicSpokeManager:
         except Exception as e:
             self.logger.error(f"Error executing action {action.action_type}: {str(e)}")
             return SpokeResponse(success=False, error=f"Execution error: {str(e)}")
+
+    async def predict_parameters(
+        self,
+        spoke_name: str,
+        action_type: str,
+        description: str,
+        parameters: dict,
+        action_definition: dict,
+    ) -> dict:
+        """
+        LLMにパラメータの推測を依頼する
+        """
+        try:
+            # パラメータスキーマを作成
+            parameters_schema = action_definition.get("parameters", {})
+
+            # プロンプトを構築
+            prompt = f"""
+あなたは与えられた情報を基に、アクションに必要なパラメータを推測するAIアシスタントです。
+
+以下の情報を基に、アクションに必要なパラメータを推測してください：
+
+**スポーク名**: {spoke_name}
+**アクションタイプ**: {action_type}
+**ユーザーの説明**: {description}
+**現在のパラメータ**: {parameters}
+
+**アクション定義**:
+{json.dumps(action_definition, indent=2, ensure_ascii=False)}
+
+**必要なパラメータスキーマ**:
+{json.dumps(parameters_schema, indent=2, ensure_ascii=False)}
+
+以下のJSONフォーマットで応答してください：
+{{
+    "predicted_parameters": {{
+        // 推測したパラメータの値をここに記載
+        // 必須パラメータは必ず含める
+        // オプションパラメータは適切と思われる場合のみ含める
+    }},
+}}
+
+注意事項：
+- 必須パラメータ（required: true）は必ず推測して含めてください
+- 日時フォーマットが指定されている場合は、ISO8601形式（例：2024-01-01T10:00:00Z）で出力してください
+- user_idなどのIDパラメータは、具体的な値が分からない場合は null にしてください
+- 不明なパラメータは推測せず、null または省略してください
+"""
+
+            # OpenAI APIを呼び出し
+            response = self.openai_client.chat.completions.create(
+                model=self.openai_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "あなたは正確で有用なパラメータ推測を行うAIアシスタントです。",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=1000,
+                temperature=0.3,  # より確定的な応答のために低めに設定
+            )
+
+            # JSONレスポンスをパース
+            response_content = response.choices[0].message.content
+            parsed_response = json.loads(response_content)
+
+            return parsed_response.get("predicted_parameters", {})
+
+        except Exception as e:
+            self.logger.error(f"Failed to predict parameters: {str(e)}")
+            return {}
 
     def get_all_supported_actions(self) -> List[str]:
         """すべてのサポートされているアクションタイプを取得"""
