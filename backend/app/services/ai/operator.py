@@ -7,7 +7,7 @@ from sqlmodel import Session
 
 from .exceptions import InvalidParameterError, PromptAnalysisError
 from .logger import AIAssistantLogger
-from .models import GenericActionParameters, NextAction, OperatorResponse
+from .models import NextAction, OperatorResponse
 from .spokes.spoke_system import DynamicSpokeManager, SpokeConfigLoader
 
 # OpenAI APIクライアントの初期化
@@ -126,7 +126,6 @@ class OperatorHub:
                 actions=[
                     NextAction(
                         action_type="unknown",
-                        parameters=GenericActionParameters(),
                         description=str(e),
                     )
                 ],
@@ -142,7 +141,6 @@ class OperatorHub:
                 actions=[
                     NextAction(
                         action_type="unknown",
-                        parameters=GenericActionParameters(),
                         description=f"エラー: {str(e)}",
                     )
                 ],
