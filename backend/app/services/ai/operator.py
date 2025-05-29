@@ -8,7 +8,8 @@ from sqlmodel import Session
 from .exceptions import InvalidParameterError, PromptAnalysisError
 from .logger import AIAssistantLogger
 from .models import NextAction, OperatorResponse
-from .spokes.spoke_system import DynamicSpokeManager, SpokeConfigLoader
+from .spokes.spoke_manager import SpokeManager
+from .spokes.spoke_system import SpokeConfigLoader
 
 # OpenAI APIクライアントの初期化
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -35,7 +36,7 @@ class OperatorHub:
         self.spoke_configs = self.config_loader.load_all_spokes()
 
         # 動的スポークマネージャーを初期化
-        self.spoke_manager = DynamicSpokeManager(session)
+        self.spoke_manager = SpokeManager(session)
 
     def _generate_actions_list(self) -> str:
         """利用可能なアクションのリストを生成（スポーク毎にグループ化）"""

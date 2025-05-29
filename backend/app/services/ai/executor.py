@@ -8,7 +8,7 @@ from .models import (
     NextAction,
     SpokeResponse,
 )
-from .spokes.spoke_system import DynamicSpokeManager
+from .spokes.spoke_manager import SpokeManager
 
 
 class ActionExecutor:
@@ -16,7 +16,7 @@ class ActionExecutor:
 
     def __init__(self, session: Optional[Session] = None):
         self.session = session
-        self.spoke_manager = DynamicSpokeManager(session)
+        self.spoke_manager = SpokeManager(session)
         self.logger = AIAssistantLogger("action_executor")
 
     async def execute_action(self, action: NextAction) -> SpokeResponse:

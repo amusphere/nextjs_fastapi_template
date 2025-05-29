@@ -16,7 +16,7 @@
 
 #### ハブ（Hub）
 - **`OperatorHub`**: 動的スポーク設定を読み込み、プロンプト解析を実行
-- **`DynamicSpokeManager`**: スポークの自動検出・インスタンス化・実行管理
+- **`SpokeManager`**: スポークの自動検出・インスタンス化・実行管理
 - **`SpokeRegistry`**: ロードされたスポークの登録・管理
 - **`DynamicSpokeLoader`**: スポークファイルの動的インポート
 
