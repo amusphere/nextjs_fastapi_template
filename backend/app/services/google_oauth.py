@@ -78,6 +78,7 @@ class GoogleOauthService:
         auth_url, _ = flow.authorization_url(
             access_type="offline",
             include_granted_scopes="true",
+            prompt="consent",  # 強制的に同意画面を表示してrefresh_tokenを確実に取得
             state=str(user_id),
         )
 
@@ -173,6 +174,12 @@ class GoogleOauthService:
         if oauth_token.refresh_token:
             refresh_token = self._decrypt_token(oauth_token.refresh_token)
 
+        # refresh_tokenが存在しない場合、適切なエラーメッセージと共にNoneを返す
+        if not refresh_token:
+            raise ValueError(
+                "Refresh token not found. Please re-authenticate to grant access to your Google Calendar."
+            )
+
         credentials = Credentials(
             token=access_token,
             refresh_token=refresh_token,
@@ -188,9 +195,14 @@ class GoogleOauthService:
 
         # トークンが期限切れの場合、リフレッシュを試行
         if credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
-            # 更新されたトークンを保存
-            self.update_tokens(oauth_token.id, credentials)
+            try:
+                credentials.refresh(Request())
+                # 更新されたトークンを保存
+                self.update_tokens(oauth_token.id, credentials)
+            except Exception as e:
+                raise ValueError(
+                    f"Failed to refresh access token: {str(e)}. Please re-authenticate."
+                )
 
         return credentials
 
