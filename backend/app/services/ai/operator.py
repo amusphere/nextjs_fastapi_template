@@ -69,9 +69,9 @@ class OperatorHub:
 ユーザーID: {self.user_id}
 
 ## 重要な指示:
+- parameters に user_id: {self.user_id} を必ず含めてください
 - 相対的な日時表現（「明日」「来週」「今日」「次の金曜日」など）は具体的な日時に変換してください
 - 時間が指定されていない場合は、適切なデフォルト時間を設定してください
-- user_idは自動的に{self.user_id}を使用してください
 """
         return system_prompt
 

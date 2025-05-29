@@ -9,11 +9,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Type
 
-from clerk_backend_api import NextAction
-
 from app.services.ai.logger import AIAssistantLogger
-from app.services.ai.models import SpokeResponse
+from app.services.ai.models import ParameterPredictionRequest, SpokeResponse
 from app.services.ai.spokes.spoke_interface import BaseSpoke
+from app.services.llm import predict_parameters
+from clerk_backend_api import NextAction
 from sqlmodel import Session
 
 
@@ -290,8 +290,41 @@ class DynamicSpokeManager:
                 success=False, error=f"Failed to get spoke instance for: {spoke_name}"
             )
 
+        # アクション定義を取得
+        action_definition = self.get_action_definition(action.action_type)
+        if action_definition is None:
+            return SpokeResponse(
+                success=False,
+                error=f"Action definition not found for: {action.action_type}",
+            )
+
         # アクションパラメータを辞書に変換
         parameters = action.get_parameters_dict()
+
+        # LLMにパラメータ推測を依頼
+        try:
+            prediction_request = ParameterPredictionRequest(
+                spoke_name=action.spoke_name,
+                action_type=action.action_type,
+                description=action.description,
+                parameters=action.parameters,
+                action_definition=action_definition,
+            )
+
+            prediction_response = await predict_parameters(prediction_request)
+
+            # 推測されたパラメータをマージ（既存のパラメータを優先）
+            parameters = prediction_response.predicted_parameters
+
+            self.logger.info(
+                f"Predicted parameters for {action.spoke_name}.{action.action_type}: {parameters}"
+            )
+
+        except Exception as e:
+            # パラメータ推測に失敗した場合は元のパラメータを使用
+            self.logger.warning(
+                f"Parameter prediction failed for {action.action_type}: {str(e)}"
+            )
 
         try:
             return await spoke_instance.execute_action(action.action_type, parameters)
@@ -310,3 +343,26 @@ class DynamicSpokeManager:
     def get_all_actions(self) -> List[ActionDefinition]:
         """すべてのアクション定義を取得"""
         return self.registry.get_all_actions()
+
+    def get_action_definition(self, action_type: str) -> Optional[Dict[str, any]]:
+        """指定されたアクションタイプの定義を取得"""
+        for config in self.registry.get_all_configs().values():
+            for action in config.actions:
+                if action.action_type == action_type:
+                    # ActionDefinitionをJSONシリアライズ可能な辞書に変換
+                    return {
+                        "action_type": action.action_type,
+                        "display_name": action.display_name,
+                        "description": action.description,
+                        "parameters": {
+                            param_name: {
+                                "type": param.type,
+                                "required": param.required,
+                                "description": param.description,
+                                "format": param.format,
+                                "default": param.default,
+                            }
+                            for param_name, param in action.parameters.items()
+                        },
+                    }
+        return None
