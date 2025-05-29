@@ -26,7 +26,7 @@ class ActionExecutor:
 
         try:
             # 動的スポークマネージャーを使用してアクションを実行
-            result = await self.spoke_manager.execute_action(action.action_type)
+            result = await self.spoke_manager.execute_action(action)
             return result
         except Exception as e:
             error = ActionExecutionError(f"Execution error: {str(e)}")
