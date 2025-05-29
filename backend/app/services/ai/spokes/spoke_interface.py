@@ -10,7 +10,19 @@ from sqlmodel import Session
 
 
 class BaseSpoke(ABC):
-    """スポーク基底クラス"""
+    """スポーク基底クラス
+
+    このクラスを継承してスポークを実装する場合、アクションメソッドは
+    関数名の先頭に 'action_' を付ける必要があります。
+
+    例:
+        - get_calendar_events アクション -> action_get_calendar_events メソッド
+        - send_email アクション -> action_send_email メソッド
+        - create_task アクション -> action_create_task メソッド
+
+    アクションメソッドは自動的に get_supported_actions() で検出され、
+    execute_action() によって呼び出されます。
+    """
 
     def __init__(self, session: Optional[Session] = None):
         self.session = session
