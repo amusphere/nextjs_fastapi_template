@@ -1,4 +1,3 @@
-import os
 from typing import Any, Dict, List, Optional
 
 from sqlmodel import Session
@@ -13,12 +12,11 @@ class AIOrchestrator:
 
     def __init__(
         self,
-        encryption_key: Optional[str] = None,
+        user_id: int,
         session: Optional[Session] = None,
     ):
-        self.encryption_key = encryption_key or os.getenv("ENCRYPTION_KEY", "")
         self.session = session
-        self.operator_hub = OperatorHub(self.encryption_key, session)
+        self.operator_hub = OperatorHub(user_id, session)
 
     async def process_request(
         self,
@@ -45,7 +43,6 @@ class AIOrchestrator:
             # Step 2: アクション計画を実行
             execution_results: List[SpokeResponse] = await execute_operator_response(
                 operator_response=operator_response,
-                encryption_key=self.encryption_key,
                 session=self.session,
             )
 
@@ -137,22 +134,3 @@ class AIOrchestrator:
             "confidence": operator_response.confidence,
             "results_data": results_data,
         }
-
-
-async def process_ai_request(
-    prompt: str,
-    encryption_key: Optional[str] = None,
-    session: Optional[Session] = None,
-) -> Dict[str, Any]:
-    """AIリクエストを処理する便利関数
-
-    Args:
-        prompt: ユーザーのプロンプト
-        encryption_key: 暗号化キー
-        session: データベースセッション
-
-    Returns:
-        処理結果の辞書
-    """
-    orchestrator = AIOrchestrator(encryption_key, session)
-    return await orchestrator.process_request(prompt)

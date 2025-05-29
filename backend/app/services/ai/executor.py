@@ -18,10 +18,9 @@ from .spokes.spoke_system import DynamicSpokeManager
 class ActionExecutor:
     """アクションを実際に実行するエグゼキューター"""
 
-    def __init__(self, encryption_key: str, session: Optional[Session] = None):
-        self.encryption_key = encryption_key
+    def __init__(self, session: Optional[Session] = None):
         self.session = session
-        self.spoke_manager = DynamicSpokeManager(encryption_key, session)
+        self.spoke_manager = DynamicSpokeManager(session)
         self.logger = AIAssistantLogger("action_executor")
 
     async def execute_action(self, action: NextAction) -> SpokeResponse:
@@ -93,21 +92,16 @@ class ActionExecutor:
 
 async def execute_operator_response(
     operator_response: OperatorResponse,
-    encryption_key: Optional[str] = None,
     session: Optional[Session] = None,
 ) -> List[SpokeResponse]:
     """オペレーターレスポンスに基づいてアクションを実行
 
     Args:
         operator_response: オペレーターからの応答
-        encryption_key: 暗号化キー
         session: データベースセッション
 
     Returns:
         List[SpokeResponse]: 各アクションの実行結果
     """
-    if not encryption_key:
-        encryption_key = os.getenv("ENCRYPTION_KEY", "")
-
-    executor = ActionExecutor(encryption_key, session)
+    executor = ActionExecutor(session)
     return await executor.execute_actions(operator_response.actions)

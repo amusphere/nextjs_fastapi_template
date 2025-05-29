@@ -255,8 +255,7 @@ class DynamicSpokeLoader:
 class DynamicSpokeManager:
     """動的スポークマネージャー - スポークのインスタンス化と実行を管理"""
 
-    def __init__(self, encryption_key: str, session: Optional[Session] = None):
-        self.encryption_key = encryption_key
+    def __init__(self, session: Optional[Session] = None):
         self.session = session
         self.logger = AIAssistantLogger("spoke_manager")
 
@@ -281,7 +280,7 @@ class DynamicSpokeManager:
             return None
 
         try:
-            instance = spoke_class(self.encryption_key, self.session)
+            instance = spoke_class(self.session)
             self._spoke_instances[spoke_name] = instance
             return instance
         except Exception as e:

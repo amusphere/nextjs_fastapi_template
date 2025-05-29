@@ -12,8 +12,7 @@ from sqlmodel import Session
 class BaseSpoke(ABC):
     """全てのスポークが実装すべき基底クラス"""
 
-    def __init__(self, encryption_key: str, session: Optional[Session] = None):
-        self.encryption_key = encryption_key
+    def __init__(self, session: Optional[Session] = None):
         self.session = session
 
     @abstractmethod

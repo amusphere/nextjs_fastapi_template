@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 from typing import Any, Dict, Optional
 
 from app.services.ai.models import SpokeResponse
@@ -11,8 +12,8 @@ from sqlmodel import Session
 class GoogleCalendarSpoke(BaseSpoke):
     """Google Calendar操作を提供するスポーク"""
 
-    def __init__(self, encryption_key: str, session: Optional[Session] = None):
-        super().__init__(encryption_key, session)
+    def __init__(self, session: Optional[Session] = None):
+        encryption_key = os.getenv("GOOGLE_OAUTH_ENCRYPTION_KEY")
         self.calendar_service = GoogleCalendarService(encryption_key, session)
 
     async def execute_action(

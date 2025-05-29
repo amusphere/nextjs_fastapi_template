@@ -18,7 +18,7 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv(
     "GOOGLE_REDIRECT_URI", "http://localhost:3000/api/auth/google/callback"
 )
-ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
+ENCRYPTION_KEY = os.getenv("GOOGLE_OAUTH_ENCRYPTION_KEY")
 
 # Google Calendar API のスコープ
 SCOPES = [

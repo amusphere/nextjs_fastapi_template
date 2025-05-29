@@ -1,11 +1,10 @@
+from app.database import get_session
 from app.models.ai_assistant import AIRequestModel, AIResponseModel
 from app.schema import User
+from app.services.ai.orchestrator import AIOrchestrator
 from app.services.auth import auth_user
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
-
-from ...database import get_session
-from ...services.ai.orchestrator import process_ai_request
 
 router = APIRouter(prefix="/ai", tags=["AI Assistant"])
 
@@ -18,11 +17,8 @@ async def process_ai_request_endpoint(
 ):
     """AIアシスタントにリクエストを送信して処理結果を取得"""
     try:
-        # ユーザーIDをプロンプトに含める処理
-        # プロンプトにuser_idを自動的に含めるように調整
-        enhanced_prompt = f"[USER_ID: {user.id}] {request.prompt}"
-
-        result = await process_ai_request(prompt=enhanced_prompt, session=session)
+        orchestrator = AIOrchestrator(user.id, session)
+        result = await orchestrator.process_request(request.prompt)
 
         return AIResponseModel(**result)
 
