@@ -8,7 +8,6 @@ from app.schema import GoogleOAuthToken
 from cryptography.fernet import Fernet
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
 from sqlmodel import Session
 
 # 環境変数から取得
@@ -115,14 +114,6 @@ class GoogleOauthService:
             expires_at=expires_at,
             session=self.session,
         )
-
-    def get_calendar_service(self, user_id: int):
-        """Google Calendar APIサービスを取得"""
-        credentials = self.get_credentials(user_id)
-        if not credentials:
-            raise ValueError("Google認証情報が見つかりません")
-
-        return build("calendar", "v3", credentials=credentials)
 
     def revoke_access(self, user_id: int):
         """ユーザーのアクセスを取り消し（レコードを削除）"""
