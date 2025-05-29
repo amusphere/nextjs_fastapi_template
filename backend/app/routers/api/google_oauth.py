@@ -4,7 +4,7 @@ import requests
 from app.database import get_session
 from app.schema import User
 from app.services.auth import auth_user
-from app.utils.google_calendar import GoogleCalendarService
+from app.services.google_oauth import GoogleOauthService
 from fastapi import APIRouter, Depends, HTTPException, status
 from google_auth_oauthlib.flow import Flow
 from pydantic import BaseModel
@@ -18,7 +18,6 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv(
     "GOOGLE_REDIRECT_URI", "http://localhost:3000/api/auth/google/callback"
 )
-ENCRYPTION_KEY = os.getenv("GOOGLE_OAUTH_ENCRYPTION_KEY")
 
 # Google Calendar API のスコープ
 SCOPES = [
@@ -153,7 +152,7 @@ async def google_oauth_callback(
         google_user_id = user_info.get("id")
 
         # トークンをデータベースに保存
-        calendar_service = GoogleCalendarService(ENCRYPTION_KEY, session)
+        calendar_service = GoogleOauthService(session)
         calendar_service.store_oauth_tokens(
             user_id=user_id,
             credentials=credentials,
@@ -183,7 +182,7 @@ async def disconnect_google_account(
 ):
     """Google アカウントの連携を解除"""
     try:
-        calendar_service = GoogleCalendarService(ENCRYPTION_KEY, session)
+        calendar_service = GoogleOauthService(session)
         calendar_service.revoke_access(user.id)
 
         return GoogleAuthResponse(
@@ -203,7 +202,7 @@ async def get_google_connection_status(
 ):
     """Google連携状況を確認"""
     try:
-        calendar_service = GoogleCalendarService(ENCRYPTION_KEY, session)
+        calendar_service = GoogleOauthService(session)
         credentials = calendar_service.get_credentials(user.id)
 
         return {"connected": credentials is not None, "user_id": user.id}

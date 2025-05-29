@@ -3,30 +3,30 @@ import os
 from datetime import datetime
 from typing import Optional
 
+from app.repositories import google_oauth_token
+from app.schema import GoogleOAuthToken
 from cryptography.fernet import Fernet
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from sqlmodel import Session
 
-from ..repositories import google_oauth_token as oauth_repo
-from ..schema import GoogleOAuthToken
-
 # 環境変数から取得
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+ENCRYPTION_KEY = os.getenv("GOOGLE_OAUTH_ENCRYPTION_KEY")
 
 
-class GoogleCalendarService:
-    def __init__(self, encryption_key: str, session: Session | None = None):
+class GoogleOauthService:
+    def __init__(self, session: Session | None = None):
         # Convert hex string to bytes, then base64 encode for Fernet
-        if len(encryption_key) == 64:  # Hex string (32 bytes * 2)
-            key_bytes = bytes.fromhex(encryption_key)
+        if len(ENCRYPTION_KEY) == 64:  # Hex string (32 bytes * 2)
+            key_bytes = bytes.fromhex(ENCRYPTION_KEY)
             fernet_key = base64.urlsafe_b64encode(key_bytes)
             self.fernet = Fernet(fernet_key)
         else:
             # Assume it's already a proper Fernet key
-            self.fernet = Fernet(encryption_key.encode())
+            self.fernet = Fernet(ENCRYPTION_KEY.encode())
         self.session = session
 
     def encrypt_token(self, token: str) -> str:
@@ -49,7 +49,7 @@ class GoogleCalendarService:
         if credentials.expiry:
             expires_at = credentials.expiry.timestamp()
 
-        return oauth_repo.upsert_oauth_token(
+        return google_oauth_token.upsert_oauth_token(
             user_id=user_id,
             access_token=self.encrypt_token(credentials.token),
             refresh_token=(
@@ -66,7 +66,7 @@ class GoogleCalendarService:
 
     def get_credentials(self, user_id: int) -> Optional[Credentials]:
         """ユーザーのGoogle認証情報を取得"""
-        oauth_token = oauth_repo.find_active_token_by_user_id(
+        oauth_token = google_oauth_token.find_active_token_by_user_id(
             user_id=user_id, session=self.session
         )
 
@@ -104,7 +104,7 @@ class GoogleCalendarService:
         """トークンを更新"""
         expires_at = credentials.expiry.timestamp() if credentials.expiry else None
 
-        oauth_repo.update_token_data(
+        google_oauth_token.update_token_data(
             token_id=token_id,
             access_token=self.encrypt_token(credentials.token),
             refresh_token=(
@@ -126,6 +126,6 @@ class GoogleCalendarService:
 
     def revoke_access(self, user_id: int):
         """ユーザーのアクセスを取り消し（レコードを削除）"""
-        return oauth_repo.delete_all_active_tokens_by_user_id(
+        return google_oauth_token.delete_all_active_tokens_by_user_id(
             user_id=user_id, session=self.session
         )
