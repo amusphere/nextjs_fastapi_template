@@ -9,11 +9,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
 
+from app.services.ai.logger import AIAssistantLogger
+from app.services.ai.models import SpokeResponse
+from app.services.ai.spokes.spoke_interface import BaseSpoke
 from sqlmodel import Session
-
-from ..logger import AIAssistantLogger
-from ..models import SpokeResponse
-from .spoke_interface import BaseSpoke
 
 
 @dataclass
@@ -107,8 +106,6 @@ class SpokeConfigLoader:
         """指定されたスポークの設定を取得"""
         return self._configs.get(spoke_name)
 
-    # get_all_actions は内部で使用されているため残す
-
 
 class SpokeRegistry:
     """スポークの登録と管理を行うレジストリ"""
@@ -119,7 +116,10 @@ class SpokeRegistry:
         self.logger = AIAssistantLogger("spoke_registry")
 
     def register_spoke(
-        self, spoke_name: str, spoke_class: Type[BaseSpoke], config: SpokeConfig
+        self,
+        spoke_name: str,
+        spoke_class: Type[BaseSpoke],
+        config: SpokeConfig,
     ):
         """スポークを登録"""
         self._spokes[spoke_name] = spoke_class
@@ -274,7 +274,9 @@ class DynamicSpokeManager:
             return None
 
     async def execute_action(
-        self, action_type: str, parameters: Dict[str, Any]
+        self,
+        action_type: str,
+        parameters: dict[str, Any],
     ) -> SpokeResponse:
         """アクションを実行"""
         spoke_name = self._action_to_spoke.get(action_type)

@@ -24,7 +24,9 @@ class GoogleCalendarSpoke(BaseSpoke):
     def _get_calendar_service(self, user_id: int):
         """Google Calendar APIサービスを取得"""
         if self.oauth_service is None:
-            raise ValueError(f"Google OAuth Service initialization failed: {getattr(self, '_initialization_error', 'Unknown error')}")
+            raise ValueError(
+                f"Google OAuth Service initialization failed: {getattr(self, '_initialization_error', 'Unknown error')}"
+            )
 
         credentials = self.oauth_service.get_credentials(user_id)
         if not credentials:
@@ -32,7 +34,9 @@ class GoogleCalendarSpoke(BaseSpoke):
         return build("calendar", "v3", credentials=credentials)
 
     async def execute_action(
-        self, action_type: str, parameters: Dict[str, Any]
+        self,
+        action_type: str,
+        parameters: dict[str, Any],
     ) -> SpokeResponse:
         """アクションを実行する"""
         try:
@@ -40,14 +44,12 @@ class GoogleCalendarSpoke(BaseSpoke):
             method_name = f"action_{action_type}"
 
             # メソッドが存在するかチェック
-            if hasattr(self, method_name):
-                method = getattr(self, method_name)
-                if callable(method):
-                    return await method(parameters)
+            if not hasattr(self, method_name):
+                return SpokeResponse(
+                    success=False, error=f"Unsupported action type: {action_type}"
+                )
 
-            return SpokeResponse(
-                success=False, error=f"Unsupported action type: {action_type}"
-            )
+            return await getattr(self, method_name)(parameters)
 
         except Exception as e:
             return SpokeResponse(

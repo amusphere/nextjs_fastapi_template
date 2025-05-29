@@ -21,21 +21,15 @@ class ActionExecutor:
 
     async def execute_action(self, action: NextAction) -> SpokeResponse:
         """個別のアクションを実行"""
+        # ログ記録
+        self.logger.log_action_execution(next_action=action)
+
         try:
             # 動的スポークマネージャーを使用してアクションを実行
             result = await self.spoke_manager.execute_action(
-                action.action_type, action.parameters
+                action.action_type, action.parameters.model_dump()
             )
-
-            # ログ記録
-            self.logger.log_action_execution(
-                next_action=action,
-                success=result.success,
-                error=result.error if not result.success else None,
-            )
-
             return result
-
         except Exception as e:
             error = ActionExecutionError(f"Execution error: {str(e)}")
             self.logger.log_error(
@@ -43,7 +37,7 @@ class ActionExecutor:
                 {
                     "spoke_name": action.spoke_name,
                     "action_type": action.action_type,
-                    "user_id": action.parameters.user_id or 0,
+                    "parameters": action.parameters.model_dump_json(),
                 },
             )
             return SpokeResponse(success=False, error=str(error))

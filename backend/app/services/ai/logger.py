@@ -25,28 +25,14 @@ class AIAssistantLogger:
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
 
-    def log_action_execution(
-        self,
-        next_action: NextAction,
-        success: bool,
-        error: str = None,
-    ):
+    def log_action_execution(self, next_action: NextAction):
         """アクション実行のログ"""
-        status = "SUCCESS" if success else "FAILED"
         log_message = (
-            f"Action execution {status} - "
             f"Spoke: {next_action.spoke_name}, "
             f"Type: {next_action.action_type}, "
-            f"User: {next_action.parameters.user_id or 'unknown'}, "
+            f"Parameters: {next_action.parameters.model_dump_json()}, "
         )
-
-        if error:
-            log_message += f", Error: {error}"
-
-        if success:
-            self.logger.info(log_message)
-        else:
-            self.logger.error(log_message)
+        self.logger.info(log_message)
 
     def error(self, message: str):
         """一般的なエラーログ"""
