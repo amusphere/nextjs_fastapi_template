@@ -107,12 +107,7 @@ class SpokeConfigLoader:
         """指定されたスポークの設定を取得"""
         return self._configs.get(spoke_name)
 
-    def get_all_actions(self) -> List[ActionDefinition]:
-        """すべてのスポークからアクション定義を取得"""
-        all_actions = []
-        for config in self._configs.values():
-            all_actions.extend(config.actions)
-        return all_actions
+    # get_all_actions は内部で使用されているため残す
 
 
 class SpokeRegistry:
@@ -129,19 +124,10 @@ class SpokeRegistry:
         """スポークを登録"""
         self._spokes[spoke_name] = spoke_class
         self._spoke_configs[spoke_name] = config
-        self.logger.info(f"Spoke registered: {spoke_name}")
 
     def get_spoke_class(self, spoke_name: str) -> Optional[Type[BaseSpoke]]:
         """スポーククラスを取得"""
         return self._spokes.get(spoke_name)
-
-    def get_spoke_config(self, spoke_name: str) -> Optional[SpokeConfig]:
-        """スポーク設定を取得"""
-        return self._spoke_configs.get(spoke_name)
-
-    def get_all_spokes(self) -> Dict[str, Type[BaseSpoke]]:
-        """すべてのスポークを取得"""
-        return self._spokes.copy()
 
     def get_all_configs(self) -> Dict[str, SpokeConfig]:
         """すべてのスポーク設定を取得"""
