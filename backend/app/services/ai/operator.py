@@ -14,7 +14,7 @@ from .spokes.spoke_system import DynamicSpokeManager, SpokeConfigLoader
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # モデルの指定
-model = "gpt-4.1"
+model = "gpt-4o-2024-08-06"
 
 
 class OperatorHub:
@@ -88,20 +88,20 @@ class OperatorHub:
         self.logger.info(system_prompt)
 
         try:
-            response = client.responses.parse(
+            response = client.beta.chat.completions.parse(
                 model=model,
-                input=[
+                messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt},
                 ],
-                text_format=OperatorResponse,
+                response_format=OperatorResponse,
             )
 
             # 構造化された応答を取得（Pydanticモデルとして自動的にパースされる）
-            operator_response = response.output_parsed
+            operator_response = response.choices[0].parsed
 
             # LLMの応答をログに記録
-            self.logger.info(response.output_text)
+            self.logger.info(response.choices[0].message.content)
 
             # 動的スポークシステムで有効なアクションタイプかどうかをチェック
             supported_actions = self.spoke_manager.get_all_supported_actions()
@@ -125,6 +125,7 @@ class OperatorHub:
             return OperatorResponse(
                 actions=[
                     NextAction(
+                        spoke_name="unknown",
                         action_type="unknown",
                         description=str(e),
                     )
@@ -140,6 +141,7 @@ class OperatorHub:
             return OperatorResponse(
                 actions=[
                     NextAction(
+                        spoke_name="unknown",
                         action_type="unknown",
                         description=f"エラー: {str(e)}",
                     )

@@ -30,7 +30,7 @@ class AIAssistantLogger:
         log_message = (
             f"Spoke: {next_action.spoke_name}, "
             f"Type: {next_action.action_type}, "
-            f"Parameters: {next_action.parameters.model_dump_json()}, "
+            f"Parameters: {next_action.parameters}, "
         )
         self.logger.info(log_message)
 

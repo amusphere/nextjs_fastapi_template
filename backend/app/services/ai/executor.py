@@ -27,7 +27,7 @@ class ActionExecutor:
         try:
             # 動的スポークマネージャーを使用してアクションを実行
             result = await self.spoke_manager.execute_action(
-                action.action_type, action.parameters.model_dump()
+                action.action_type, action.parameters
             )
             return result
         except Exception as e:
@@ -37,7 +37,7 @@ class ActionExecutor:
                 {
                     "spoke_name": action.spoke_name,
                     "action_type": action.action_type,
-                    "parameters": action.parameters.model_dump_json(),
+                    "parameters": action.parameters,
                 },
             )
             return SpokeResponse(success=False, error=str(error))
