@@ -6,6 +6,6 @@ router = APIRouter(prefix="/chat")
 
 
 @router.post("", response_model=ChatResponseModel)
-async def chat(data: ChatRequestModel) -> ChatResponseModel:
+async def chat(data: ChatRequestModel):
     response = await chat_with_openai(data.prompt)
-    return ChatResponseModel(response=response)
+    return {"response": response}
