@@ -104,6 +104,14 @@ class SpokeConfigLoader:
         """指定されたスポークの設定を取得"""
         return self._configs.get(spoke_name)
 
+    def get_all_action_types(self) -> List[str]:
+        """すべてのスポークから利用可能なアクションタイプを取得"""
+        action_types = set()
+        for config in self._configs.values():
+            for action in config.actions:
+                action_types.add(action.action_type)
+        return sorted(action_types)
+
 
 class SpokeRegistry:
     """スポークの登録と管理を行うレジストリ"""
@@ -145,6 +153,17 @@ class SpokeRegistry:
         for config in self._spoke_configs.values():
             all_actions.extend(config.actions)
         return all_actions
+
+    def get_action_definition(
+        self, spoke_name: str, action_type: str
+    ) -> Optional[ActionDefinition]:
+        """指定されたスポークのアクション定義を取得"""
+        config = self._spoke_configs.get(spoke_name)
+        if config:
+            for action in config.actions:
+                if action.action_type == action_type:
+                    return action
+        return None
 
 
 class DynamicSpokeLoader:

@@ -3,20 +3,13 @@ from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
 
-import openai
+from app.utils.llm import llm_chat_completions_perse
 from sqlmodel import Session
 
 from .exceptions import InvalidParameterError, PromptAnalysisError
 from .logger import AIAssistantLogger
 from .models import NextAction, OperatorResponse
-from .spokes.spoke_manager import SpokeManager
 from .spokes.spoke_system import SpokeConfigLoader
-
-# OpenAI APIクライアントの初期化
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-# モデルの指定
-model = "gpt-4.1"
 
 
 class OperatorHub:
@@ -36,17 +29,18 @@ class OperatorHub:
         self.config_loader = SpokeConfigLoader(spokes_dir)
         self.spoke_configs = self.config_loader.load_all_spokes()
 
-        # 動的スポークマネージャーを初期化
-        self.spoke_manager = SpokeManager(session)
-
     def _generate_actions_list(self) -> str:
         """利用可能なアクションのリストを生成（スポーク毎にグループ化）"""
         actions_list = []
 
         for config in self.spoke_configs.values():
             # スポーク名を追加
-            actions_list.append(f"\n## {config.display_name} ({config.spoke_name})")
+            actions_list.append(
+                f"\n## {config.display_name}\nスポーク名: {config.spoke_name}\n説明: {config.description}\n"
+            )
             actions_list.append(config.description)
+
+            actions_list.append("\n### アクション名: 説明")
 
             # そのスポークのアクションを追加
             for action in config.actions:
@@ -93,23 +87,22 @@ class OperatorHub:
         self.logger.info(system_prompt)
 
         try:
-            response = client.beta.chat.completions.parse(
-                model=model,
-                messages=[
+            # LLMにプロンプトを送信して応答を取得
+            operator_response = llm_chat_completions_perse(
+                prompts=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt},
                 ],
                 response_format=OperatorResponse,
+                temperature=0.7,
+                max_tokens=1500,
             )
 
-            # 構造化された応答を取得（Pydanticモデルとして自動的にパースされる）
-            operator_response = response.choices[0].message.parsed
-
             # LLMの応答をログに記録
-            self.logger.info(response.choices[0].message.content)
+            self.logger.info(operator_response.model_dump_json())
 
             # 動的スポークシステムで有効なアクションタイプかどうかをチェック
-            supported_actions = self.spoke_manager.get_all_supported_actions()
+            supported_actions = self.config_loader.get_all_action_types()
             for action in operator_response.actions:
                 if (
                     action.action_type not in supported_actions
