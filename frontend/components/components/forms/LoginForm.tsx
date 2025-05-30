@@ -12,7 +12,12 @@ interface LoginFormValues {
 }
 
 export default function LoginForm() {
-  const form = useForm<LoginFormValues>();
+  const form = useForm<LoginFormValues>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   const onSubmit = async (data: LoginFormValues) => {
     const res = await fetch("/api/auth/signin", {

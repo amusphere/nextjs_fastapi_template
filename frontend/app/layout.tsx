@@ -17,7 +17,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: process.env.APP_NAME,
   description: "",
-  viewport: "width=device-width, initial-scale=1",
 };
 
 const authSystem = process.env.NEXT_PUBLIC_AUTH_SYSTEM;
