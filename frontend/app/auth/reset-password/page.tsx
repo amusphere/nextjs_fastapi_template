@@ -102,7 +102,7 @@ export default function ResetPasswordPage() {
   if (isError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <Card className="w-1/4 text-center">
+        <Card className="w-full max-w-md text-center">
           <CardHeader>
             <CardTitle className="text-2xl my-2">Error</CardTitle>
             <CardDescription>
@@ -130,7 +130,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <Card className="w-1/4 text-center">
+      <Card className="w-full max-w-md text-center">
         <CardHeader>
           <CardTitle className="text-2xl my-2">Set New Password</CardTitle>
           <CardDescription>
