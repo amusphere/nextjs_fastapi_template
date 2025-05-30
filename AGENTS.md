@@ -73,6 +73,7 @@ npm run build
 ```
 
 ## UI
+- Ensure responsive design implementation.
 - Use shadcn/ui for UI components.
 - Do not modify the files in `components/components/ui/` or `components/lib/`.
 - Use the components in `components/components/commons/` and `components/components/forms/` for custom components.
