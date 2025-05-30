@@ -9,6 +9,7 @@ dependencies = [
     "clerk-backend-api>=2.0.2",
     "dotenv>=0.9.9",
     "fastapi[standard]>=0.115.12",
+    "openai>=1.82.1",
     "passlib[bcrypt]>=1.7.4",
     "psycopg2-binary>=2.9.10",
     "python-jose>=3.4.0",
