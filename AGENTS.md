@@ -72,6 +72,12 @@ Also, verify that the build passes with the following command:
 npm run build
 ```
 
+## UI
+- Use shadcn/ui for UI components.
+- Do not modify the files in `components/components/ui/` or `components/lib/`.
+- Use the components in `components/components/commons/` and `components/components/forms/` for custom components.
+- Use the components in `components/components/pages/` for page components.
+
 ## Pull Requests
 - Branch names must be in English and include the feature name.
 - Use hyphens (-) as separators between words.

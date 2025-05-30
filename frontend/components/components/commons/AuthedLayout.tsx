@@ -14,10 +14,12 @@ export default async function AuthedLayout({ children }: { children: ReactNode }
   return (
     <SidebarProvider>
       <AppSidebar user={data} />
-      <main>
-        <div className="">
-          <SidebarTrigger />
-          <div className="p-4">{children}</div>
+      <main className="flex-1 w-full">
+        <div className="flex flex-col min-h-screen">
+          <div className="md:p-2">
+            <SidebarTrigger />
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">{children}</div>
         </div>
       </main>
     </SidebarProvider>
