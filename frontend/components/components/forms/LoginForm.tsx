@@ -28,7 +28,7 @@ export default function LoginForm() {
       });
 
       if (!res.ok) {
-        toast.error("ログインに失敗しました。");
+        toast.error("Login failed.");
         return;
       }
 
@@ -36,11 +36,11 @@ export default function LoginForm() {
       if (responseData.success) {
         window.location.href = "/dashboard";
       } else {
-        toast.error("ログインに失敗しました。");
+        toast.error("Login failed.");
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("ログインに失敗しました。");
+      toast.error("Login failed.");
     }
   }
 

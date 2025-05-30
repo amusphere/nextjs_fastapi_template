@@ -22,7 +22,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 統計カード */}
+        {/* Statistics cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -67,7 +67,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* メインコンテンツエリア */}
+        {/* Main content area */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* クイックアクション */}
+        {/* Quick actions */}
         <div className="mt-8">
           <Card>
             <CardHeader>

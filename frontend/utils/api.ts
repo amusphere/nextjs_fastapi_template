@@ -5,10 +5,10 @@ import { auth } from '@clerk/nextjs/server';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-// APIのベースURL
+// API base URL
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000/api';
 
-// API呼び出し時のデフォルトオプション
+// Default options for API calls
 const defaultOptions: RequestInit = {
   headers: {
     'Content-Type': 'application/json',
@@ -16,10 +16,10 @@ const defaultOptions: RequestInit = {
   },
 };
 
-// JSON レスポンス用の汎用型
+// Generic type for JSON responses
 type Json = Record<string, any>;
 
-// APIエラーの型定義
+// API error type definition
 interface ApiError {
   message: string;
   status?: number;
@@ -27,7 +27,7 @@ interface ApiError {
 }
 
 /**
- * API呼び出し結果のレスポンス型
+ * API call result response type
  */
 export interface ApiResponse<T = any> {
   data?: T;
@@ -35,7 +35,7 @@ export interface ApiResponse<T = any> {
 }
 
 /**
- * API呼び出しのエラーハンドリング
+ * API call error handling
  */
 const handleError = (error: any): ApiError => {
   console.error('API Error:', error);
@@ -68,7 +68,7 @@ const getAccessToken = async (): Promise<string | null> => {
 
 
 /**
- * 汎用的なAPI呼び出し関数
+ * Generic API call function
  */
 async function fetchApi<T>(
   endpoint: string,
@@ -77,7 +77,7 @@ async function fetchApi<T>(
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
   try {
-    // headersを必ずオブジェクトとして初期化
+    // Always initialize headers as an object
     const baseHeaders = { ...(defaultOptions.headers || {}), ...(options.headers || {}) };
 
     const token = await getAccessToken();
@@ -92,10 +92,10 @@ async function fetchApi<T>(
     if (!response.ok) {
       let errorData: Json = {};
       try {
-        // APIからのエラーレスポンスをJSONとして解析
+        // Parse error response from API as JSON
         errorData = await response.clone().json() as Json;
       } catch {
-        // JSONでない場合はテキストとして取得
+        // If not JSON, get as text
         errorData = { message: await response.text() };
       }
 
@@ -108,13 +108,13 @@ async function fetchApi<T>(
       };
     }
 
-    // 成功レスポンスがある場合
+    // If there is a successful response
     if (response.status !== 204) { // 204 No Content
       const data = (await response.json()) as T;
       return { data };
     }
 
-    // 204 No Content の場合
+    // For 204 No Content
     return { data: null as any as T };
 
   } catch (err: any) {
@@ -123,7 +123,7 @@ async function fetchApi<T>(
 }
 
 /**
- * GET リクエスト
+ * GET request
  */
 export async function apiGet<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
   return fetchApi<T>(endpoint, {
@@ -133,7 +133,7 @@ export async function apiGet<T>(endpoint: string, options: RequestInit = {}): Pr
 }
 
 /**
- * POST リクエスト
+ * POST request
  */
 export async function apiPost<T>(
   endpoint: string,
@@ -148,7 +148,7 @@ export async function apiPost<T>(
 }
 
 /**
- * ファイルアップロード用 POST (multipart/form-data)
+ * POST for file upload (multipart/form-data)
  */
 export async function apiPostForm<T>(
   endpoint: string,
@@ -161,7 +161,7 @@ export async function apiPostForm<T>(
 }
 
 /**
- * URLエンコードされたデータをPOSTする
+ * POST URL-encoded data
  */
 export async function apiPostUrlEncoded<T>(
   endpoint: string,
@@ -180,7 +180,7 @@ export async function apiPostUrlEncoded<T>(
 }
 
 /**
- * PATCH リクエスト
+ * PATCH request
  */
 export async function apiPatch<T>(
   endpoint: string,
@@ -195,7 +195,7 @@ export async function apiPatch<T>(
 }
 
 /**
- * DELETE リクエスト
+ * DELETE request
  */
 export async function apiDelete<T>(
   endpoint: string,
@@ -208,7 +208,7 @@ export async function apiDelete<T>(
 }
 
 /**
- * サーバーアクションでAPI呼び出し結果からNextResponseを生成するヘルパー
+ * Helper to generate NextResponse from API call result in server actions
  */
 export async function createApiResponse<T>(apiResponse: ApiResponse<T>): Promise<NextResponse> {
   if (apiResponse.error) {

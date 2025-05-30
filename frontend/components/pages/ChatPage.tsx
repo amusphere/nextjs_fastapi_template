@@ -15,7 +15,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // メッセージが追加されたら自動でスクロール
+  // Auto-scroll when a message is added
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
@@ -83,7 +83,7 @@ export default function ChatPage() {
         <Separator />
 
         <CardContent className="flex-1 flex flex-col p-0">
-          {/* チャットメッセージエリア */}
+          {/* Chat messages area */}
           <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
             <div className="space-y-4">
               {messages.length === 0 ? (
@@ -123,7 +123,7 @@ export default function ChatPage() {
                 ))
               )}
 
-              {/* ローディング表示 */}
+              {/* Loading display */}
               {isLoading && (
                 <div className="flex gap-3 justify-start">
                   <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
@@ -143,7 +143,7 @@ export default function ChatPage() {
 
           <Separator />
 
-          {/* 入力エリア */}
+          {/* Input area */}
           <div className="p-4">
             <div className="flex gap-2">
               <Input
