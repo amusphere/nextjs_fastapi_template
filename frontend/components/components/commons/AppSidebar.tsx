@@ -1,7 +1,7 @@
 "use client"
 
 import { User } from "@/types/User";
-import { Home, LayoutDashboard, MessageCircle } from "lucide-react";
+import { LayoutDashboard, MessageCircle } from "lucide-react";
 
 import {
   Sidebar,
@@ -22,17 +22,12 @@ type Props = {
 
 const items = [
   {
-    title: "Home",
-    url: "/",
-    icon: Home,
-  },
-  {
-    title: "dashboard",
+    title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "chat",
+    title: "Chat",
     url: "/chat",
     icon: MessageCircle,
   },

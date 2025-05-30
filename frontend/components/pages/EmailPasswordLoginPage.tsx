@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 export default function EmailPasswordLoginPage() {
   return (
     <>
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Card className="w-1/4 text-center">
+      <div className="flex flex-col items-center justify-center min-h-screen p-2">
+        <Card className="w-full max-w-md text-center">
           <CardHeader>
             <CardTitle className="text-2xl my-2">
               {process.env.APP_NAME}

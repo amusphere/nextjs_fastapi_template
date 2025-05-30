@@ -12,18 +12,33 @@ interface LoginFormValues {
 }
 
 export default function LoginForm() {
-  const form = useForm<LoginFormValues>();
+  const form = useForm<LoginFormValues>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   const onSubmit = async (data: LoginFormValues) => {
-    const res = await fetch("/api/auth/signin", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
 
-    const { success } = await res.json();
-    if (success) {
-      window.location.href = "/dashboard";
-    } else {
+      if (!res.ok) {
+        toast.error("ログインに失敗しました。");
+        return;
+      }
+
+      const responseData = await res.json();
+      if (responseData.success) {
+        window.location.href = "/dashboard";
+      } else {
+        toast.error("ログインに失敗しました。");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
       toast.error("ログインに失敗しました。");
     }
   }
