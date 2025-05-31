@@ -1,7 +1,17 @@
 from app.database import get_session
 from app.models.auth import UserCreateModel, UserSignInModel, UserTokenModel
-from app.models.password import PasswordResetModel, PasswordResetRequestModel
-from app.services.password_reset import request_password_reset, reset_password
+from app.models.password import (
+    PasswordChangeModel,
+    PasswordResetModel,
+    PasswordResetRequestModel,
+)
+from app.schema import User
+from app.services.auth import auth_user
+from app.services.password_reset import (
+    change_password,
+    request_password_reset,
+    reset_password,
+)
 from app.utils.auth.email_password import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     authenticate_user,
@@ -71,3 +81,14 @@ async def reset_password_endpoint(
 ):
     reset_password(data.token, data.new_password, session)
     return {"message": "Password updated"}
+
+
+@router.post("/change-password")
+async def change_password_endpoint(
+    data: PasswordChangeModel,
+    user: User = Depends(auth_user),
+    session: Session = Depends(get_session),
+):
+    user = session.merge(user)
+    change_password(user, data.current_password, data.new_password, session)
+    return {"message": "Password changed successfully"}

@@ -8,7 +8,8 @@ from app.repositories.password_reset import (
     get_active_token_by_hash,
 )
 from app.repositories.user import get_user_br_column
-from app.utils.auth.email_password import get_password_hash
+from app.schema import User
+from app.utils.auth.email_password import get_password_hash, verify_password
 from fastapi import HTTPException, status
 from sqlmodel import Session
 
@@ -49,4 +50,27 @@ def reset_password(token: str, new_password: str, session: Session) -> None:
     user.password = get_password_hash(new_password)
     session.add(user)
     session.delete(token_entry)
+    session.commit()
+
+
+def change_password(
+    user: User,
+    current_password: str,
+    new_password: str,
+    session: Session,
+) -> None:
+    if not user.password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User has no password set",
+        )
+
+    if not verify_password(current_password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+
+    user.password = get_password_hash(new_password)
+    session.add(user)
     session.commit()

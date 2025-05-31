@@ -8,3 +8,8 @@ class PasswordResetRequestModel(BaseModel):
 class PasswordResetModel(BaseModel):
     token: str
     new_password: str
+
+
+class PasswordChangeModel(BaseModel):
+    current_password: str
+    new_password: str

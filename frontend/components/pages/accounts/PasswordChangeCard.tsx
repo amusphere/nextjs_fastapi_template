@@ -36,18 +36,18 @@ export default function PasswordChangeCard() {
       const res = await fetch("/api/auth/change-password", {
         method: "POST",
         body: JSON.stringify({
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword,
+          current_password: data.currentPassword,
+          new_password: data.newPassword,
         }),
       });
 
       const responseData = await res.json();
 
-      if (res.ok && responseData.success) {
-        toast.success("Password changed successfully");
+      if (res.ok) {
+        toast.success(responseData.message || "Password changed successfully");
         form.reset();
       } else {
-        toast.error(responseData.error || "Failed to change password.");
+        toast.error(responseData.detail || "Failed to change password.");
       }
     } catch (error) {
       console.error("Error:", error);
