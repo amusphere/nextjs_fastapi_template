@@ -23,6 +23,14 @@
     "python.analysis.extraPaths": [
         "${workspaceFolder}/backend"
     ],
+    "[typescript]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+    },
+    "[typescriptreact]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+    },
     "dbcode.connections": [
         {
             "connectionId": "C4sE9YmUZrZ1x5sQmtqeA",

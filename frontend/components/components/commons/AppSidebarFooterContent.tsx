@@ -2,9 +2,9 @@
 
 import { User } from "@/types/User";
 import { UserButton } from "@clerk/nextjs";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 type Props = {
   user: User;
@@ -28,8 +28,11 @@ export default function AppSidebarFooterContent({ user }: Props) {
             <span className="text-sm font-medium">{user.name}</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <Link href="/account" className="w-full">
+                Account
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Link href="/api/auth/signout" className="text-red-500">
                 Signout

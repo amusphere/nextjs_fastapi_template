@@ -180,6 +180,21 @@ export async function apiPostUrlEncoded<T>(
 }
 
 /**
+ * PUT request
+ */
+export async function apiPut<T>(
+  endpoint: string,
+  data: any = undefined,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
+  return fetchApi<T>(endpoint, {
+    method: 'PUT',
+    body: data !== undefined ? JSON.stringify(data) : undefined,
+    ...options,
+  });
+}
+
+/**
  * PATCH request
  */
 export async function apiPatch<T>(
