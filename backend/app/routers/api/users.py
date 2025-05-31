@@ -34,4 +34,5 @@ async def update_current_user(
     user: User = Depends(auth_user),
     session: Session = Depends(get_session),
 ):
+    user = session.merge(user)
     return update_user(session, user, data.model_dump())
