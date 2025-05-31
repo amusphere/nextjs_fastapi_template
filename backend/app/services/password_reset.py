@@ -12,7 +12,7 @@ from app.utils.auth.email_password import get_password_hash
 from fastapi import HTTPException, status
 from sqlmodel import Session
 
-TOKEN_EXPIRE_MINUTES = 30
+TOKEN_EXPIRE_MINUTES = 1440
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 

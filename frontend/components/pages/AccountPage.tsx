@@ -21,7 +21,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-interface UpdateUsernameFormValues {
+interface UpdateFormValues {
   name: string;
 }
 
@@ -31,15 +31,14 @@ interface Props {
 
 export default function AccountPage({ user }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
 
-  const form = useForm<UpdateUsernameFormValues>({
+  const form = useForm<UpdateFormValues>({
     defaultValues: {
       name: user.name || "",
     },
   });
 
-  const onSubmit = async (data: UpdateUsernameFormValues) => {
+  const onSubmit = async (data: UpdateFormValues) => {
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/users/me", {
@@ -53,19 +52,14 @@ export default function AccountPage({ user }: Props) {
       const responseData = await res.json();
 
       if (res.ok && responseData.success) {
-        setIsSuccess(true);
-        toast.success("Username updated successfully");
-
-        // Redirect after a short delay to show success message
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 1500);
+        toast.success("Save successfully");
+        form.setValue("name", data.name);
       } else {
-        toast.error(responseData.error || "Failed to update username");
+        toast.error(responseData.error || "Failed to save.");
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("An error occurred while updating your username");
+      toast.error("An unexpected error occurred while saving.");
     } finally {
       setIsSubmitting(false);
     }
@@ -78,65 +72,51 @@ export default function AccountPage({ user }: Props) {
           <CardTitle className="text-2xl">Account Settings</CardTitle>
         </CardHeader>
         <CardContent>
-          {isSuccess ? (
-            <div className="space-y-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                Your username has been successfully updated.
-              </p>
-              <Button
-                className="w-full"
-                onClick={() => window.location.href = "/dashboard"}
-              >
-                Back to Dashboard
-              </Button>
-            </div>
-          ) : (
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4 w-full"
-              >
-                <FormField
-                  control={form.control}
-                  name="name"
-                  rules={{
-                    required: "Username is required",
-                    minLength: {
-                      value: 2,
-                      message: "Username must be at least 2 characters",
-                    },
-                    maxLength: {
-                      value: 50,
-                      message: "Username must be less than 50 characters",
-                    },
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="text"
-                          placeholder="Enter your username"
-                          disabled={isSubmitting}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex flex-col space-y-2">
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Saving..." : "Save"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          )}
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4 w-full"
+            >
+              <FormField
+                control={form.control}
+                name="name"
+                rules={{
+                  required: "Username is required",
+                  minLength: {
+                    value: 2,
+                    message: "Username must be at least 2 characters",
+                  },
+                  maxLength: {
+                    value: 50,
+                    message: "Username must be less than 50 characters",
+                  },
+                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="text"
+                        placeholder="Enter your username"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex flex-col space-y-2">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>
