@@ -1,20 +1,16 @@
-import os
-
-import openai
-from fastapi import HTTPException, status
+from app.utils.llm import chat_completion
 
 
-async def chat_with_openai(prompt: str) -> str:
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="OpenAI API key not configured",
-        )
-
-    client = openai.AsyncOpenAI(api_key=api_key)
-    resp = await client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return resp.choices[0].message.content.strip()
+async def send_chat(prompt: str) -> str:
+    messages = [
+        {
+            "role": "user",
+            "content": prompt,
+        }
+    ]
+    try:
+        response = chat_completion(messages=messages)
+        return response
+    except Exception as e:
+        print(f"Error during chat completion: {e}")
+        return "An error occurred while processing your request."
