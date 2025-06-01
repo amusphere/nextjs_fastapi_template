@@ -44,7 +44,26 @@ export default function AccountSettingCard({ user }: Props) {
         toast.success("Save successfully");
         form.setValue("name", data.name);
       } else {
-        toast.error(responseData.error || "Failed to save.");
+        // Handle error message properly - ensure it's always a string
+        let errorMessage = "Failed to save.";
+
+        if (responseData.error) {
+          if (typeof responseData.error === 'string') {
+            errorMessage = responseData.error;
+          } else if (typeof responseData.error === 'object') {
+            errorMessage = responseData.error.detail ||
+                          responseData.error.message ||
+                          JSON.stringify(responseData.error);
+          }
+        } else if (responseData.detail) {
+          if (typeof responseData.detail === 'string') {
+            errorMessage = responseData.detail;
+          } else {
+            errorMessage = JSON.stringify(responseData.detail);
+          }
+        }
+
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error("Error:", error);

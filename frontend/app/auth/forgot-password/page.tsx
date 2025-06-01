@@ -47,7 +47,19 @@ export default function ForgotPasswordPage() {
         setIsSuccess(true);
         toast.success("Password reset link has been sent.");
       } else {
-        toast.error(responseData.error || "An error occurred while processing your request.");
+        let errorMessage = "An error occurred while processing your request.";
+
+        if (responseData.error) {
+          if (typeof responseData.error === 'string') {
+            errorMessage = responseData.error;
+          } else if (typeof responseData.error === 'object') {
+            errorMessage = responseData.error.detail ||
+                          responseData.error.message ||
+                          JSON.stringify(responseData.error);
+          }
+        }
+
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error("Error:", error);
