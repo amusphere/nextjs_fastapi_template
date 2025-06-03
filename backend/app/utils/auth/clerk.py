@@ -3,7 +3,7 @@ import os
 import sys
 
 import httpx
-from app.database import engine
+from app.database import get_engine
 from app.repositories.user import get_user_br_column
 from app.schema import User
 from clerk_backend_api import AuthenticateRequestOptions, Clerk
@@ -46,7 +46,7 @@ async def get_auth_sub(request: Request, credentials=Depends(security)) -> str |
 
 
 async def get_authed_user(sub: str) -> User | None:
-    session = Session(engine)
+    session = Session(get_engine())
     user = get_user_br_column(session, sub, "clerk_sub")
     session.close()
     return user
@@ -67,7 +67,7 @@ def create_new_user(sub: str) -> User:
         name=clerk_user.username,
         clerk_sub=sub,
     )
-    session = Session(engine)
+    session = Session(get_engine())
     session.add(user)
     session.commit()
     session.refresh(user)

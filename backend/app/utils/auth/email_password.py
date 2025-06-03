@@ -4,7 +4,7 @@ import sys
 from datetime import datetime, timedelta
 
 import jwt
-from app.database import engine
+from app.database import get_engine
 from app.models.auth import UserCreateModel
 from app.repositories.user import get_user_br_column
 from app.schema import User
@@ -78,7 +78,7 @@ async def get_auth_sub(token: str = Depends(oauth2_scheme)) -> str | None:
 
 
 async def get_authed_user(sub: str) -> User | None:
-    session = Session(engine)
+    session = Session(get_engine())
     user = get_user_br_column(session, sub, "email")
     session.close()
     return user
