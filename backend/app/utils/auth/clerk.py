@@ -3,7 +3,6 @@ import os
 import sys
 
 import httpx
-from app.database import get_session
 from app.repositories.user import get_user_br_column
 from app.schema import User
 from clerk_backend_api import AuthenticateRequestOptions, Clerk
@@ -45,16 +44,11 @@ async def get_auth_sub(request: Request, credentials=Depends(security)) -> str |
 
 
 async def get_authed_user(sub: str) -> User | None:
-    session_gen = get_session()
-    session = next(session_gen)
-    try:
+    from app.utils.database_utils import get_db_session
+
+    with get_db_session() as session:
         user = get_user_br_column(session, sub, "clerk_sub")
         return user
-    finally:
-        try:
-            session_gen.close()
-        except Exception:
-            pass
 
 
 def create_new_user(sub: str) -> User:
@@ -73,15 +67,10 @@ def create_new_user(sub: str) -> User:
         clerk_sub=sub,
     )
 
-    session_gen = get_session()
-    session = next(session_gen)
-    try:
+    from app.utils.database_utils import get_db_session
+
+    with get_db_session() as session:
         session.add(user)
         session.commit()
         session.refresh(user)
         return user
-    finally:
-        try:
-            session_gen.close()
-        except Exception:
-            pass

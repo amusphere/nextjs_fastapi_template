@@ -4,7 +4,6 @@ import sys
 from datetime import datetime, timedelta
 
 import jwt
-from app.database import get_session
 from app.models.auth import UserCreateModel
 from app.repositories.user import get_user_br_column
 from app.schema import User
@@ -78,16 +77,11 @@ async def get_auth_sub(token: str = Depends(oauth2_scheme)) -> str | None:
 
 
 async def get_authed_user(sub: str) -> User | None:
-    session_gen = get_session()
-    session = next(session_gen)
-    try:
+    from app.utils.database_utils import get_db_session
+
+    with get_db_session() as session:
         user = get_user_br_column(session, sub, "email")
         return user
-    finally:
-        try:
-            session_gen.close()
-        except Exception:
-            pass
 
 
 def create_new_user(data: UserCreateModel, session: Session) -> str | None:

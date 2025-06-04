@@ -4,13 +4,9 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
-from app.database import (
-    clear_test_engine,
-    get_session,
-    set_test_engine,
-    set_test_session,
-)
+from app.database import get_session
 from app.utils.auth.email_password import create_access_token, create_sub
+from app.utils.test_database import clear_test_config, set_test_engine, set_test_session
 from fastapi.testclient import TestClient
 from main import app
 
@@ -45,7 +41,7 @@ def test_client(test_session, test_engine):
             yield client
     finally:
         # クリーンアップ
-        clear_test_engine()
+        clear_test_config()
 
         # 環境変数を元に戻す
         if original_db_url is not None:
