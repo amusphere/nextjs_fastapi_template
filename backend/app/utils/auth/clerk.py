@@ -3,14 +3,13 @@ import os
 import sys
 
 import httpx
-from app.database import get_engine
+from app.database import get_session
 from app.repositories.user import get_user_br_column
 from app.schema import User
 from clerk_backend_api import AuthenticateRequestOptions, Clerk
 from clerk_backend_api import User as ClerkUser
 from fastapi import Depends, Request
 from fastapi.security import HTTPBearer
-from sqlmodel import Session
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger(__name__)
@@ -46,10 +45,16 @@ async def get_auth_sub(request: Request, credentials=Depends(security)) -> str |
 
 
 async def get_authed_user(sub: str) -> User | None:
-    session = Session(get_engine())
-    user = get_user_br_column(session, sub, "clerk_sub")
-    session.close()
-    return user
+    session_gen = get_session()
+    session = next(session_gen)
+    try:
+        user = get_user_br_column(session, sub, "clerk_sub")
+        return user
+    finally:
+        try:
+            session_gen.close()
+        except Exception:
+            pass
 
 
 def create_new_user(sub: str) -> User:
@@ -67,9 +72,16 @@ def create_new_user(sub: str) -> User:
         name=clerk_user.username,
         clerk_sub=sub,
     )
-    session = Session(get_engine())
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    session.close()
-    return user
+
+    session_gen = get_session()
+    session = next(session_gen)
+    try:
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        return user
+    finally:
+        try:
+            session_gen.close()
+        except Exception:
+            pass

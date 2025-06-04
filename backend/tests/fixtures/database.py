@@ -13,7 +13,10 @@ def test_engine():
         echo=True,
         connect_args={"check_same_thread": False},  # マルチスレッド対応
     )
+
+    # SQLModelメタデータからテーブルを作成
     SQLModel.metadata.create_all(engine)
+
     return engine
 
 
