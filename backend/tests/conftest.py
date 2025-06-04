@@ -1,6 +1,7 @@
 import sys
 from datetime import timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from app.database import get_session
@@ -16,17 +17,66 @@ from tests.fixtures.users import *  # noqa: F401, F403
 
 
 @pytest.fixture
-def test_client(test_session):
+def test_client(test_session, test_engine):
     """テスト用のFastAPIクライアント"""
+    import os
+
     from fastapi.testclient import TestClient
 
     def get_test_session():
         yield test_session
 
+    # 環境変数を一時的にテスト用SQLiteに変更
+    original_db_url = os.environ.get("DATABASE_URL")
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+
+    # 依存性をオーバーライド
     app.dependency_overrides[get_session] = get_test_session
 
-    with TestClient(app) as client:
-        yield client
+    # Sessionクラス自体をパッチして、常に同じテスト用sessionを返すようにする
+    class MockSession:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __getattr__(self, name):
+            # test_sessionの属性やメソッドを転送
+            return getattr(test_session, name)
+
+        def close(self):
+            # テスト中はセッションを閉じない
+            pass
+
+        def __enter__(self):
+            return test_session
+
+        def __exit__(self, *args):
+            pass
+
+    def mock_session_new(*args, **kwargs):
+        return MockSession()
+
+    # get_engine関数をパッチしてテスト用エンジンを返すようにする
+    with patch("app.database.get_engine", return_value=test_engine):
+        with patch(
+            "app.utils.auth.email_password.get_engine", return_value=test_engine
+        ):
+            with patch("app.utils.auth.clerk.get_engine", return_value=test_engine):
+                # Sessionの作成自体をパッチしてテスト用sessionを返すようにする
+                with patch(
+                    "app.utils.auth.email_password.Session",
+                    side_effect=mock_session_new,
+                ):
+                    with patch(
+                        "app.utils.auth.clerk.Session", side_effect=mock_session_new
+                    ):
+                        with TestClient(app) as client:
+                            yield client
+
+    # 環境変数を元に戻す
+    if original_db_url is not None:
+        os.environ["DATABASE_URL"] = original_db_url
+    elif "DATABASE_URL" in os.environ:
+        del os.environ["DATABASE_URL"]
 
     app.dependency_overrides.clear()
 

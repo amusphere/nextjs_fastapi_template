@@ -8,7 +8,11 @@ from sqlmodel import Session, SQLModel, create_engine
 @pytest.fixture(scope="session")
 def test_engine():
     """テスト用のSQLiteインメモリデータベースエンジン"""
-    engine = create_engine("sqlite:///:memory:", echo=True)
+    engine = create_engine(
+        "sqlite:///:memory:",
+        echo=True,
+        connect_args={"check_same_thread": False},  # マルチスレッド対応
+    )
     SQLModel.metadata.create_all(engine)
     return engine
 
