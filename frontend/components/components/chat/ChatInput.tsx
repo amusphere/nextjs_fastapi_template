@@ -23,7 +23,7 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
@@ -35,7 +35,7 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="メッセージを入力してください... (Shift+Enterで改行)"
+        placeholder="メッセージを入力してください... (Shift+Enterで送信、Enterで改行)"
         className="min-h-[60px] max-h-[120px] resize-none flex-1"
         disabled={isLoading}
       />
