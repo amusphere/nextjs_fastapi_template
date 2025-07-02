@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from app.utils.llm import llm_chat_completions
 from sqlmodel import Session
 
 from .executor import ActionExecutor
@@ -48,7 +49,7 @@ class AIOrchestrator:
 
             # Step 3: 実行結果をサマリー
             summary = self._create_execution_summary(
-                operator_response, execution_results
+                prompt, operator_response, execution_results
             )
 
             return {
@@ -86,6 +87,7 @@ class AIOrchestrator:
 
     def _create_execution_summary(
         self,
+        prompt: str,
         operator_response: OperatorResponse,
         execution_results: List[SpokeResponse],
     ) -> Dict[str, Any]:
@@ -122,8 +124,54 @@ class AIOrchestrator:
                     "description": action.description if action else "Unknown action",
                     "data_available": result.data is not None,
                     "error": result.error,
+                    "data": (
+                        result.data
+                        if result.success and result.data is not None
+                        else None
+                    ),
                 }
             )
+
+        # ユーザーの元の質問に対する適切な返答を生成
+        results_text = llm_chat_completions(
+            prompts=[
+                {
+                    "role": "system",
+                    "content": """あなたは親切で知識豊富なAIアシスタントです。ユーザーの質問に対して実行した処理の結果を基に、自然で分かりやすい日本語で直接的な回答をしてください。
+
+重要なガイドライン：
+- ユーザーの元の質問に対する明確で具体的な回答を提供する
+- 実行結果から得られた情報を整理して分かりやすく提示する
+- 成功した場合は結果を具体的に示し、失敗した場合は理由と対処法を説明する
+- 技術的な詳細は避け、ユーザーにとって価値のある情報に焦点を当てる
+- 自然で親しみやすい口調で、簡潔かつ明確に回答する
+- JSON形式ではなく、自然な文章で回答する""",
+                },
+                {
+                    "role": "user",
+                    "content": f"""ユーザーの質問: "{prompt}"
+
+実行した処理の結果:
+- 実行したアクション数: {total_actions}
+- 成功したアクション: {successful_actions}
+- 失敗したアクション: {failed_actions}
+- 全体のステータス: {overall_status}
+- 処理の信頼度: {operator_response.confidence}
+
+オペレーターの分析: {operator_response.analysis}
+
+各アクションの詳細結果:
+{chr(10).join([f"- {item['action_type']}: {'成功' if item['success'] else '失敗'} - {item['description']}" + (f" (エラー: {item['error']})" if item['error'] else "") for item in results_data])}
+
+実際に取得されたデータ:
+{chr(10).join([f"- {item['description']}: {item['data']}" for item in results_data if item['success'] and item['data'] is not None])}
+
+この情報を基に、ユーザーの質問「{prompt}」に対する適切で自然な返答を生成してください。ユーザーが求めている具体的な情報や回答を中心に、分かりやすく説明してください。""",
+                },
+            ],
+            temperature=0.7,
+            max_tokens=800,
+        )
 
         return {
             "total_actions": total_actions,
@@ -133,4 +181,5 @@ class AIOrchestrator:
             "overall_status": overall_status,
             "confidence": operator_response.confidence,
             "results_data": results_data,
+            "results_text": results_text,
         }

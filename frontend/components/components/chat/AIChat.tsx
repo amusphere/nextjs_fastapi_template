@@ -18,7 +18,10 @@ interface AIResponse {
   success: boolean;
   operator_response?: Record<string, unknown>;
   execution_results?: Record<string, unknown>[];
-  summary?: Record<string, unknown>;
+  summary?: {
+    results_text?: string;
+    [key: string]: unknown;
+  };
   error?: string;
 }
 
@@ -67,17 +70,8 @@ export default function AIChat() {
       // AIの応答を整形
       let aiResponseText = "";
       if (data.success) {
-        if (data.summary) {
-          aiResponseText = JSON.stringify(data.summary, null, 2);
-        } else if (data.operator_response) {
-          aiResponseText = JSON.stringify(data.operator_response, null, 2);
-        } else {
-          aiResponseText = "処理が完了しました。";
-        }
-
-        if (data.execution_results && data.execution_results.length > 0) {
-          aiResponseText += "\n\n実行結果:\n" + JSON.stringify(data.execution_results, null, 2);
-        }
+        // 成功した場合はresults_textのみ表示
+        aiResponseText = data.summary?.results_text || "処理が完了しました。";
       } else {
         aiResponseText = data.error || "エラーが発生しました。";
       }
