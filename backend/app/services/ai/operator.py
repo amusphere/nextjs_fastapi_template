@@ -69,6 +69,7 @@ class OperatorHub:
 - parameters に user_id: {self.user_id} を必ず含めてください
 - 相対的な日時表現（「明日」「来週」「今日」「次の金曜日」など）は具体的な日時に変換してください
 - 日時に関することは基本的に日本時間（JST）で処理を行ってください
+- オプショナルなパラメータが存在しない場合は、`null` または `None` を返してください
 """
         return system_prompt
 
@@ -106,13 +107,9 @@ class OperatorHub:
                     action.action_type not in supported_actions
                     and action.action_type != "unknown"
                 ):
-                    self.logger.log_error(
-                        InvalidParameterError(
-                            f"Unknown action type: {action.action_type}"
-                        ),
-                        {"user_id": self.user_id, "action": action.model_dump()},
+                    raise InvalidParameterError(
+                        f"Unsupported action type: {action.action_type}"
                     )
-                    action.action_type = "unknown"
 
             return operator_response
 

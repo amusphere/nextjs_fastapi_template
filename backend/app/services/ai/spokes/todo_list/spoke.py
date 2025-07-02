@@ -6,7 +6,7 @@ from app.repositories.todo_list import (
     incomplete_todo_list,
     update_todo_list,
 )
-from app.schema import TodoList
+from app.services.ai.models import SpokeResponse
 from app.services.ai.spokes.spoke_interface import BaseSpoke
 
 
@@ -16,85 +16,158 @@ class TodoListSpoke(BaseSpoke):
     def __init__(self, session):
         super().__init__(session)
 
-    def get_incomplete_todo_list(self, user_id: int) -> list[TodoList]:
+    def _todo_to_dict(self, todo) -> dict:
+        """Convert ToDo object to dictionary for JSON serialization"""
+        return {
+            "uuid": str(todo.uuid),
+            "title": todo.title,
+            "description": todo.description,
+            "completed": todo.completed,
+            "expires_at": todo.expires_at,
+            "created_at": todo.created_at,
+            "updated_at": todo.updated_at,
+        }
+
+    async def action_get_incomplete_todo_list(self, parameters: dict) -> SpokeResponse:
         """Get all incomplete ToDo lists for a user."""
-        return find_todo_list(
-            session=self.session,
-            user_id=user_id,
-            completed=False,
-        )
+        try:
+            user_id = parameters["user_id"]
+            todo_lists = find_todo_list(
+                session=self.session,
+                user_id=user_id,
+                completed=False,
+            )
+            # Convert to dict for JSON serialization
+            todo_data = [self._todo_to_dict(todo) for todo in todo_lists]
+            return SpokeResponse(success=True, data=todo_data)
+        except Exception as e:
+            return SpokeResponse(
+                success=False, error=f"Error getting incomplete todos: {str(e)}"
+            )
 
-    def get_completed_todo_list(self, user_id: int) -> list[TodoList]:
+    async def action_get_completed_todo_list(self, parameters: dict) -> SpokeResponse:
         """Get all completed ToDo lists for a user."""
-        return find_todo_list(
-            session=self.session,
-            user_id=user_id,
-            completed=True,
-        )
+        try:
+            user_id = parameters["user_id"]
+            todo_lists = find_todo_list(
+                session=self.session,
+                user_id=user_id,
+                completed=True,
+            )
+            # Convert to dict for JSON serialization
+            todo_data = [self._todo_to_dict(todo) for todo in todo_lists]
+            return SpokeResponse(success=True, data=todo_data)
+        except Exception as e:
+            return SpokeResponse(
+                success=False, error=f"Error getting completed todos: {str(e)}"
+            )
 
-    def search_todo_list_more_than_expires_at(
-        self,
-        user_id: int,
-        expires_at: float,
-    ) -> list[TodoList]:
+    async def action_search_todo_list_more_than_expires_at(
+        self, parameters: dict
+    ) -> SpokeResponse:
         """Search ToDo lists that expire after a certain timestamp."""
-        return find_todo_list(
-            session=self.session,
-            user_id=user_id,
-            completed=False,
-            expires_at=expires_at,
-        )
+        try:
+            user_id = parameters["user_id"]
+            expires_at = parameters["expires_at"]
+            todo_lists = find_todo_list(
+                session=self.session,
+                user_id=user_id,
+                completed=False,
+                expires_at=expires_at,
+            )
+            # Convert to dict for JSON serialization
+            todo_data = [self._todo_to_dict(todo) for todo in todo_lists]
+            return SpokeResponse(success=True, data=todo_data)
+        except Exception as e:
+            return SpokeResponse(
+                success=False, error=f"Error searching todos: {str(e)}"
+            )
 
-    def add_todo_list(
-        self,
-        user_id: int,
-        title: str,
-        description: str | None = None,
-        expires_at: float | None = None,
-    ) -> TodoList:
+    async def action_add_todo_list(self, parameters: dict) -> SpokeResponse:
         """Add a new ToDo list."""
-        return create_todo_list(
-            session=self.session,
-            user_id=user_id,
-            title=title,
-            description=description,
-            expires_at=expires_at,
-        )
+        try:
+            user_id = parameters["user_id"]
+            title = parameters["title"]
+            description = parameters.get("description")
+            expires_at = parameters.get("expires_at")
 
-    def to_complete_todo_list(self, todo_list_id: int):
+            todo = create_todo_list(
+                session=self.session,
+                user_id=user_id,
+                title=title,
+                description=description,
+                expires_at=expires_at,
+            )
+
+            # Convert to dict for JSON serialization
+            todo_data = self._todo_to_dict(todo)
+            return SpokeResponse(success=True, data=todo_data)
+        except Exception as e:
+            return SpokeResponse(success=False, error=f"Error adding todo: {str(e)}")
+
+    async def action_to_complete_todo_list(self, parameters: dict) -> SpokeResponse:
         """Mark a ToDo list as completed."""
-        return complete_todo_list(
-            session=self.session,
-            id=todo_list_id,
-        )
+        try:
+            todo_list_id = parameters["todo_list_id"]
+            todo = complete_todo_list(
+                session=self.session,
+                id=todo_list_id,
+            )
 
-    def to_incomplete_todo_list(self, todo_list_id: int):
+            # Convert to dict for JSON serialization
+            todo_data = self._todo_to_dict(todo)
+            return SpokeResponse(success=True, data=todo_data)
+        except Exception as e:
+            return SpokeResponse(
+                success=False, error=f"Error completing todo: {str(e)}"
+            )
+
+    async def action_to_incomplete_todo_list(self, parameters: dict) -> SpokeResponse:
         """Mark a ToDo list as incomplete."""
-        return incomplete_todo_list(
-            session=self.session,
-            id=todo_list_id,
-        )
+        try:
+            todo_list_id = parameters["todo_list_id"]
+            todo = incomplete_todo_list(
+                session=self.session,
+                id=todo_list_id,
+            )
 
-    def update_user_todo_list(
-        self,
-        todo_list_id: int,
-        title: str | None = None,
-        description: str | None = None,
-        expires_at: float | None = None,
-    ) -> TodoList:
+            # Convert to dict for JSON serialization
+            todo_data = self._todo_to_dict(todo)
+            return SpokeResponse(success=True, data=todo_data)
+        except Exception as e:
+            return SpokeResponse(
+                success=False, error=f"Error marking todo as incomplete: {str(e)}"
+            )
+
+    async def action_update_user_todo_list(self, parameters: dict) -> SpokeResponse:
         """Update a ToDo list."""
-        return update_todo_list(
-            session=self.session,
-            id=todo_list_id,
-            title=title,
-            description=description,
-            expires_at=expires_at,
-        )
+        try:
+            todo_list_id = parameters["todo_list_id"]
+            title = parameters.get("title")
+            description = parameters.get("description")
+            expires_at = parameters.get("expires_at")
 
-    def delete_user_todo_list(self, todo_list_id: int) -> bool:
+            todo = update_todo_list(
+                session=self.session,
+                id=todo_list_id,
+                title=title,
+                description=description,
+                expires_at=expires_at,
+            )
+
+            # Convert to dict for JSON serialization
+            todo_data = self._todo_to_dict(todo)
+            return SpokeResponse(success=True, data=todo_data)
+        except Exception as e:
+            return SpokeResponse(success=False, error=f"Error updating todo: {str(e)}")
+
+    async def action_delete_user_todo_list(self, parameters: dict) -> SpokeResponse:
         """Delete a ToDo list."""
         try:
+            todo_list_id = parameters["todo_list_id"]
             delete_todo_list(session=self.session, id=todo_list_id)
-            return True
-        except ValueError:
-            return False
+            return SpokeResponse(success=True, data={"deleted_todo_id": todo_list_id})
+        except ValueError as e:
+            return SpokeResponse(success=False, error=f"Todo not found: {str(e)}")
+        except Exception as e:
+            return SpokeResponse(success=False, error=f"Error deleting todo: {str(e)}")
