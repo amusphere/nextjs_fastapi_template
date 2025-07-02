@@ -30,19 +30,20 @@ export default function ChatInput({ onSendMessage, isLoading }: ChatInputProps) 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 p-4 border-t bg-white">
+    <form onSubmit={handleSubmit} className="flex gap-2 p-2 sm:p-4 border-t bg-white">
       <Textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="メッセージを入力してください... (Shift+Enterで送信、Enterで改行)"
-        className="min-h-[60px] max-h-[120px] resize-none flex-1"
+        className="min-h-[50px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] resize-none flex-1 text-sm sm:text-base"
         disabled={isLoading}
       />
       <Button
         type="submit"
         disabled={!message.trim() || isLoading}
-        className="self-end px-4 py-3"
+        className="self-end px-3 sm:px-4 py-2 sm:py-3 min-w-[44px]"
+        size="sm"
       >
         {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

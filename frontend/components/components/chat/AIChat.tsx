@@ -103,11 +103,11 @@ export default function AIChat() {
   };
 
   return (
-    <Card className="h-[500px] sm:h-[600px] flex flex-col">
-      <CardHeader className="pb-3">
+    <Card className="w-full h-full flex flex-col">
+      <CardHeader className="pb-3 px-4">
         <CardTitle className="text-lg sm:text-xl">AI アシスタント</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col p-0">
+      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
         {error && (
           <Alert className="mx-3 sm:mx-4 mb-4 border-red-200 bg-red-50">
             <AlertCircle className="h-4 w-4 text-red-600" />
@@ -117,7 +117,7 @@ export default function AIChat() {
           </Alert>
         )}
 
-        <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-2">
+        <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-2 min-h-0">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full text-gray-500">
               <p className="text-center text-sm sm:text-base px-4">
@@ -125,7 +125,7 @@ export default function AIChat() {
               </p>
             </div>
           ) : (
-            <>
+            <div className="space-y-3">
               {messages.map((msg) => (
                 <ChatMessage
                   key={msg.id}
@@ -135,7 +135,7 @@ export default function AIChat() {
                 />
               ))}
               <div ref={messagesEndRef} />
-            </>
+            </div>
           )}
         </div>
 
