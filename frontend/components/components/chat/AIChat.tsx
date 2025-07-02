@@ -1,9 +1,6 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Alert, AlertDescription } from "../ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
 
@@ -103,44 +100,43 @@ export default function AIChat() {
   };
 
   return (
-    <Card className="w-full h-full flex flex-col">
-      <CardHeader className="pb-3 px-4">
-        <CardTitle className="text-lg sm:text-xl">AI アシスタント</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-        {error && (
-          <Alert className="mx-3 sm:mx-4 mb-4 border-red-200 bg-red-50">
-            <AlertCircle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800 text-sm">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-2 min-h-0">
-          {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              <p className="text-center text-sm sm:text-base px-4">
-                AIアシスタントに質問や依頼を送信してください。
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {messages.map((msg) => (
-                <ChatMessage
-                  key={msg.id}
-                  message={msg.message}
-                  isUser={msg.isUser}
-                  timestamp={msg.timestamp}
-                />
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
+    <div className="w-full h-full flex flex-col bg-gray-50">
+      {/* Error */}
+      {error && (
+        <div className="flex-shrink-0 p-4">
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
+            <p className="font-bold">エラー</p>
+            <p>{error}</p>
+          </div>
         </div>
+      )}
 
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-2 min-h-0">
+        {messages.length === 0 && !isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">Aureca AI</h1>
+            <p>AIアシスタントに話しかけてみましょう。</p>
+          </div>
+        ) : (
+          <div className="space-y-4 pb-4">
+            {messages.map((msg) => (
+              <ChatMessage
+                key={msg.id}
+                message={msg.message}
+                isUser={msg.isUser}
+                timestamp={msg.timestamp}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <div className="flex-shrink-0 bg-white/70 backdrop-blur-sm border-t border-gray-200/50">
         <ChatInput onSendMessage={sendMessage} isLoading={isLoading} />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
