@@ -20,6 +20,7 @@ class User(SQLModel, table=True):
         back_populates="user"
     )
     google_oauth_tokens: list["GoogleOAuthToken"] = Relationship(back_populates="user")
+    todo_lists: list["TodoList"] = Relationship(back_populates="user")
 
 
 class PasswordResetToken(SQLModel, table=True):
