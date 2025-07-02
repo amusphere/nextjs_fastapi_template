@@ -72,6 +72,7 @@ class TodoList(SQLModel, table=True):
     title: str
     description: str | None = Field(nullable=True)
     completed: bool = Field(default=False)
+    expires_at: float | None = Field(default=None, nullable=True)
 
 
 metadata = SQLModel.metadata

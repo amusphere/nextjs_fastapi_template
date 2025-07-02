@@ -1,14 +1,22 @@
+import select
+
 from app.schema import TodoList
 from sqlmodel import Session
 
 
-def find_todo_list_by_user_id(
+def find_todo_list(
     session: Session,
     user_id: int,
+    completed: bool = False,
+    expires_at: float | None = None,
 ) -> list[TodoList]:
     """Find all ToDo lists for a specific user"""
-    todo_lists = session.query(TodoList).filter(TodoList.user_id == user_id).all()
-    return todo_lists
+    stmt = select(TodoList).where(
+        TodoList.user_id == user_id,
+        TodoList.completed == completed,
+        TodoList.expires_at >= expires_at,
+    )
+    return session.exec(stmt).all()
 
 
 def get_todo_list(
@@ -27,12 +35,14 @@ def create_todo_list(
     user_id: int,
     title: str,
     description: str | None = None,
+    expires_at: float | None = None,
 ) -> TodoList:
     """Create a new ToDo list"""
     todo_list = TodoList(
         user_id=user_id,
         title=title,
         description=description,
+        expires_at=expires_at,
     )
     session.add(todo_list)
     session.commit()
@@ -45,6 +55,7 @@ def update_todo_list(
     id: int,
     title: str | None = None,
     description: str | None = None,
+    expires_at: float | None = None,
 ) -> TodoList:
     """Update an existing ToDo list"""
     todo_list = get_todo_list(session, id)
@@ -55,6 +66,8 @@ def update_todo_list(
         todo_list.title = title
     if description is not None:
         todo_list.description = description
+    if expires_at is not None:
+        todo_list.expires_at = expires_at
 
     session.commit()
     session.refresh(todo_list)
@@ -66,14 +79,7 @@ def complete_todo_list(
     id: int,
 ) -> TodoList:
     """Mark a ToDo list as completed"""
-    todo_list = get_todo_list(session, id)
-    if not todo_list:
-        raise ValueError("ToDo list not found")
-
-    todo_list.completed = True
-    session.commit()
-    session.refresh(todo_list)
-    return todo_list
+    return update_todo_list(session, id, completed=True)
 
 
 def incomplete_todo_list(
@@ -81,11 +87,17 @@ def incomplete_todo_list(
     id: int,
 ) -> TodoList:
     """Mark a ToDo list as incomplete"""
+    return update_todo_list(session, id, completed=False)
+
+
+def delete_todo_list(
+    session: Session,
+    id: int,
+) -> None:
+    """Delete a ToDo list"""
     todo_list = get_todo_list(session, id)
     if not todo_list:
         raise ValueError("ToDo list not found")
 
-    todo_list.completed = False
+    session.delete(todo_list)
     session.commit()
-    session.refresh(todo_list)
-    return todo_list

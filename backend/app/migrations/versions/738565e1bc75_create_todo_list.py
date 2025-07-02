@@ -32,6 +32,7 @@ def upgrade() -> None:
         sa.Column("title", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.Column("completed", sa.Boolean(), nullable=False),
+        sa.Column("expires_at", sa.Float(), nullable=True),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["users.id"],
