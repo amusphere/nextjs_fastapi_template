@@ -1,7 +1,5 @@
-import select
-
 from app.schema import TodoList
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 
 def find_todo_list(
@@ -14,8 +12,11 @@ def find_todo_list(
     stmt = select(TodoList).where(
         TodoList.user_id == user_id,
         TodoList.completed == completed,
-        TodoList.expires_at >= expires_at,
     )
+
+    if expires_at is not None:
+        stmt = stmt.where(TodoList.expires_at >= expires_at)
+
     return session.exec(stmt).all()
 
 
@@ -56,6 +57,7 @@ def update_todo_list(
     title: str | None = None,
     description: str | None = None,
     expires_at: float | None = None,
+    completed: bool | None = None,
 ) -> TodoList:
     """Update an existing ToDo list"""
     todo_list = get_todo_list(session, id)
@@ -68,6 +70,8 @@ def update_todo_list(
         todo_list.description = description
     if expires_at is not None:
         todo_list.expires_at = expires_at
+    if completed is not None:
+        todo_list.completed = completed
 
     session.commit()
     session.refresh(todo_list)
