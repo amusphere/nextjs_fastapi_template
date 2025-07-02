@@ -36,15 +36,14 @@ class OperatorHub:
         for config in self.spoke_configs.values():
             # スポーク名を追加
             actions_list.append(
-                f"\n## {config.display_name}\nスポーク名: {config.spoke_name}\n説明: {config.description}\n"
+                f"\n## {config.display_name}\nスポーク名: {config.spoke_name}\n説明: {config.description}"
             )
-            actions_list.append(config.description)
 
-            actions_list.append("\n### アクション名: 説明")
+            actions_list.append("\n### アクション名 : 説明 : パラメータ")
 
             # そのスポークのアクションを追加
             for action in config.actions:
-                actions_list.append(f"- {action.action_type}: {action.description}")
+                actions_list.append(f"- {action.action_type} : {action.description} : {action.parameters}")
 
         return "\n".join(actions_list)
 
