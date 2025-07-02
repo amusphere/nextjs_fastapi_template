@@ -4,17 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 export default function EmailPasswordLoginPage() {
   return (
     <>
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Card className="w-1/4 text-center">
-          <CardHeader>
-            <CardTitle className="text-2xl my-2">
+      <div className="flex flex-col items-center justify-center min-h-screen px-4">
+        <Card className="w-full max-w-md mx-auto text-center">
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="text-xl sm:text-2xl my-2">
               {process.env.APP_NAME}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm sm:text-base">
               A template for building Next.js applications.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             <LoginForm />
           </CardContent>
         </Card>

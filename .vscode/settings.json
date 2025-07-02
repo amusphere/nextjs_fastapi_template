@@ -6,6 +6,7 @@
         "datareader",
         "Fernet",
         "googleapiclient",
+        "levelname",
         "nextjs",
         "NIXPACKS",
         "outputsize",

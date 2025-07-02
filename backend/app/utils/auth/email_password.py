@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24時間 (1440分)
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/signin")
