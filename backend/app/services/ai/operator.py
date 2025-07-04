@@ -36,15 +36,14 @@ class OperatorHub:
         for config in self.spoke_configs.values():
             # スポーク名を追加
             actions_list.append(
-                f"\n## {config.display_name}\nスポーク名: {config.spoke_name}\n説明: {config.description}\n"
+                f"\n## {config.display_name}\nスポーク名: {config.spoke_name}\n説明: {config.description}"
             )
-            actions_list.append(config.description)
 
-            actions_list.append("\n### アクション名: 説明")
+            actions_list.append("\n### アクション名 : 説明 : パラメータ")
 
             # そのスポークのアクションを追加
             for action in config.actions:
-                actions_list.append(f"- {action.action_type}: {action.description}")
+                actions_list.append(f"- {action.action_type} : {action.description} : {action.parameters}")
 
         return "\n".join(actions_list)
 
@@ -69,8 +68,8 @@ class OperatorHub:
 ## 重要な指示:
 - parameters に user_id: {self.user_id} を必ず含めてください
 - 相対的な日時表現（「明日」「来週」「今日」「次の金曜日」など）は具体的な日時に変換してください
-- 基本的に日本時間（JST）で処理を行ってください
-- 時間が指定されていない場合は、適切なデフォルト時間を設定してください
+- 日時に関することは基本的に日本時間（JST）で処理を行ってください
+- オプショナルなパラメータが存在しない場合は、`null` または `None` を返してください
 """
         return system_prompt
 
@@ -108,13 +107,9 @@ class OperatorHub:
                     action.action_type not in supported_actions
                     and action.action_type != "unknown"
                 ):
-                    self.logger.log_error(
-                        InvalidParameterError(
-                            f"Unknown action type: {action.action_type}"
-                        ),
-                        {"user_id": self.user_id, "action": action.model_dump()},
+                    raise InvalidParameterError(
+                        f"Unsupported action type: {action.action_type}"
                     )
-                    action.action_type = "unknown"
 
             return operator_response
 

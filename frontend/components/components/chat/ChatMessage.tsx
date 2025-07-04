@@ -1,35 +1,39 @@
 import { cn } from "../../lib/utils";
-import { Card, CardContent } from "../ui/card";
+import { Bot, User } from 'lucide-react';
 
 interface ChatMessageProps {
   message: string;
   isUser: boolean;
-  timestamp: Date;
+  timestamp: Date; // タイムスタンプは当面表示しないが、データとしては残す
 }
 
-export default function ChatMessage({ message, isUser, timestamp }: ChatMessageProps) {
+export default function ChatMessage({ message, isUser }: ChatMessageProps) {
+  const Icon = isUser ? User : Bot;
+  const iconContainerBg = isUser ? "bg-gray-300" : "bg-gray-200";
+  const iconColor = isUser ? "text-gray-600" : "text-gray-500";
+
   return (
-    <div className={cn("flex w-full mb-4", isUser ? "justify-end" : "justify-start")}>
-      <div className={cn("max-w-[80%] sm:max-w-[70%]", isUser ? "ml-4" : "mr-4")}>
-        <Card className={cn(
-          "shadow-sm",
+    <div className={cn("flex items-start gap-3", isUser ? "justify-end" : "justify-start")}>
+      {!isUser && (
+        <div className={cn("w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center", iconContainerBg)}>
+          <Icon className={cn("w-5 h-5", iconColor)} />
+        </div>
+      )}
+      <div
+        className={cn(
+          "max-w-[85%] rounded-2xl px-4 py-2.5",
           isUser
-            ? "bg-blue-500 text-white border-blue-500"
-            : "bg-gray-50 border-gray-200"
-        )}>
-          <CardContent className="p-3 sm:p-4">
-            <p className="text-sm sm:text-base whitespace-pre-wrap break-words">
-              {message}
-            </p>
-            <p className={cn(
-              "text-xs mt-2 opacity-70",
-              isUser ? "text-blue-100" : "text-gray-500"
-            )}>
-              {timestamp.toLocaleTimeString()}
-            </p>
-          </CardContent>
-        </Card>
+            ? "bg-blue-600 text-white"
+            : "bg-white border border-gray-200"
+        )}
+      >
+        <p className="text-sm whitespace-pre-wrap break-words">{message}</p>
       </div>
+      {isUser && (
+        <div className={cn("w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center", iconContainerBg)}>
+          <Icon className={cn("w-5 h-5", iconColor)} />
+        </div>
+      )}
     </div>
   );
 }
