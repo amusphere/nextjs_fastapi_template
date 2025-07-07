@@ -51,20 +51,34 @@ class SpokeConfigLoader:
     def __init__(self, spokes_dir: str):
         self.spokes_dir = Path(spokes_dir)
         self._configs: Dict[str, SpokeConfig] = {}
+        self.logger = AIAssistantLogger("spoke_config_loader")
 
     def load_all_spokes(self) -> Dict[str, SpokeConfig]:
         """すべてのスポーク設定を読み込み"""
         self._configs.clear()
 
+        # 除外するディレクトリ
+        excluded_dirs = {"__pycache__", ".git", "node_modules", "venv", ".venv"}
+
         for spoke_dir in self.spokes_dir.iterdir():
-            if spoke_dir.is_dir() and not spoke_dir.name.startswith("."):
+            # ディレクトリかつ、除外リストにない場合のみ処理
+            if (
+                spoke_dir.is_dir()
+                and not spoke_dir.name.startswith(".")
+                and spoke_dir.name not in excluded_dirs
+            ):
+
                 config_file = spoke_dir / "actions.json"
                 if config_file.exists():
                     try:
                         config = self._load_spoke_config(config_file)
                         self._configs[config.spoke_name] = config
                     except Exception as e:
-                        print(f"Error loading spoke config from {config_file}: {e}")
+                        self.logger.error(
+                            f"Error loading spoke config from {config_file}: {e}"
+                        )
+                else:
+                    self.logger.warning(f"No actions.json found in: {spoke_dir}")
 
         return self._configs
 
@@ -138,8 +152,7 @@ class SpokeRegistry:
         current_user: User,
     ) -> Optional[Type[BaseSpoke]]:
         """スポーククラスを取得"""
-        cache_key = f"{spoke_name}_{current_user.id}"
-        return self._spokes.get(cache_key)
+        return self._spokes.get(spoke_name)
 
     def get_all_configs(self) -> Dict[str, SpokeConfig]:
         """すべてのスポーク設定を取得"""
@@ -195,6 +208,8 @@ class DynamicSpokeLoader:
             spoke_path = os.path.join(self.spokes_directory, spoke_name)
             if os.path.isdir(spoke_path):
                 self._load_spoke(spoke_name, spoke_path, config)
+            else:
+                self.logger.warning(f"Spoke directory not found: {spoke_path}")
 
         return self.registry
 
@@ -210,6 +225,7 @@ class DynamicSpokeLoader:
             # スポーククラスを動的にインポート
             spoke_class = self._import_spoke_class(spoke_file, spoke_name)
             if spoke_class is None:
+                self.logger.error(f"Failed to import spoke class for: {spoke_name}")
                 return
 
             # レジストリに登録
@@ -239,6 +255,11 @@ class DynamicSpokeLoader:
 
             if spoke_class is None:
                 self.logger.error(f"Spoke class {class_name} not found in {spoke_file}")
+                # モジュール内の利用可能なクラスをログ出力
+                available_classes = [
+                    name for name in dir(module) if not name.startswith("_")
+                ]
+                self.logger.info(f"Available classes in module: {available_classes}")
                 return None
 
             if not issubclass(spoke_class, BaseSpoke):

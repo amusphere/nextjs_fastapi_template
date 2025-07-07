@@ -43,6 +43,7 @@ class SpokeManager:
 
         spoke_class = self.registry.get_spoke_class(spoke_name, current_user)
         if spoke_class is None:
+            self.logger.error(f"Spoke class not found for: {spoke_name}")
             return None
 
         try:
