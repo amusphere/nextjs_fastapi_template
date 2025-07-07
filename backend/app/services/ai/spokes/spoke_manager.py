@@ -5,6 +5,7 @@
 import os
 from typing import Dict, Optional
 
+from app.schema import User
 from app.services.ai.logger import AIAssistantLogger
 from app.services.ai.models import NextAction, SpokeResponse
 from app.services.ai.spokes.spoke_interface import BaseSpoke
@@ -30,24 +31,33 @@ class SpokeManager:
         # アクションタイプからスポーク名へのマッピング
         self._action_to_spoke = self.registry.get_action_to_spoke_mapping()
 
-    def get_spoke_instance(self, spoke_name: str) -> Optional[BaseSpoke]:
+    def get_spoke_instance(
+        self,
+        spoke_name: str,
+        current_user: User,
+    ) -> Optional[BaseSpoke]:
         """スポークインスタンスを取得（キャッシュ付き）"""
-        if spoke_name in self._spoke_instances:
-            return self._spoke_instances[spoke_name]
+        cache_key = f"{spoke_name}_{current_user.id}"
+        if cache_key in self._spoke_instances:
+            return self._spoke_instances[cache_key]
 
-        spoke_class = self.registry.get_spoke_class(spoke_name)
+        spoke_class = self.registry.get_spoke_class(spoke_name, current_user)
         if spoke_class is None:
             return None
 
         try:
-            instance = spoke_class(self.session)
-            self._spoke_instances[spoke_name] = instance
+            instance = spoke_class(self.session, current_user)
+            self._spoke_instances[cache_key] = instance
             return instance
         except Exception as e:
             self.logger.error(f"Failed to instantiate spoke {spoke_name}: {str(e)}")
             return None
 
-    async def execute_action(self, action: NextAction) -> SpokeResponse:
+    async def execute_action(
+        self,
+        action: NextAction,
+        current_user: User,
+    ) -> SpokeResponse:
         """アクションを実行"""
         spoke_name = self._action_to_spoke.get(action.action_type)
         if spoke_name is None:
@@ -65,7 +75,7 @@ class SpokeManager:
                 error=f"Action definition not found for {spoke_name}.{action.action_type}",
             )
 
-        spoke_instance = self.get_spoke_instance(spoke_name)
+        spoke_instance = self.get_spoke_instance(spoke_name, current_user)
         if spoke_instance is None:
             return SpokeResponse(
                 success=False, error=f"Failed to get spoke instance for: {spoke_name}"

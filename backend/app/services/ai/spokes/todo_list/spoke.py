@@ -13,9 +13,6 @@ from app.services.ai.spokes.spoke_interface import BaseSpoke
 class TodoListSpoke(BaseSpoke):
     """Manage ToDo List Spoke"""
 
-    def __init__(self, session):
-        super().__init__(session)
-
     def _todo_to_dict(self, todo) -> dict:
         """Convert ToDo object to dictionary for JSON serialization"""
         return {
@@ -28,13 +25,12 @@ class TodoListSpoke(BaseSpoke):
             "updated_at": todo.updated_at,
         }
 
-    async def action_get_incomplete_todo_list(self, parameters: dict) -> SpokeResponse:
+    async def action_get_incomplete_todo_list(self, _: dict) -> SpokeResponse:
         """Get all incomplete ToDo lists for a user."""
         try:
-            user_id = parameters["user_id"]
             todo_lists = find_todo_list(
                 session=self.session,
-                user_id=user_id,
+                user_id=self.current_user.id,
                 completed=False,
             )
             # Convert to dict for JSON serialization
@@ -45,13 +41,12 @@ class TodoListSpoke(BaseSpoke):
                 success=False, error=f"Error getting incomplete todos: {str(e)}"
             )
 
-    async def action_get_completed_todo_list(self, parameters: dict) -> SpokeResponse:
+    async def action_get_completed_todo_list(self, _: dict) -> SpokeResponse:
         """Get all completed ToDo lists for a user."""
         try:
-            user_id = parameters["user_id"]
             todo_lists = find_todo_list(
                 session=self.session,
-                user_id=user_id,
+                user_id=self.current_user.id,
                 completed=True,
             )
             # Convert to dict for JSON serialization
@@ -67,11 +62,10 @@ class TodoListSpoke(BaseSpoke):
     ) -> SpokeResponse:
         """Search ToDo lists that expire after a certain timestamp."""
         try:
-            user_id = parameters["user_id"]
             expires_at = parameters["expires_at"]
             todo_lists = find_todo_list(
                 session=self.session,
-                user_id=user_id,
+                user_id=self.current_user.id,
                 completed=False,
                 expires_at=expires_at,
             )
@@ -86,14 +80,13 @@ class TodoListSpoke(BaseSpoke):
     async def action_add_todo_list(self, parameters: dict) -> SpokeResponse:
         """Add a new ToDo list."""
         try:
-            user_id = parameters["user_id"]
             title = parameters["title"]
             description = parameters.get("description")
             expires_at = parameters.get("expires_at")
 
             todo = create_todo_list(
                 session=self.session,
-                user_id=user_id,
+                user_id=self.current_user.id,
                 title=title,
                 description=description,
                 expires_at=expires_at,

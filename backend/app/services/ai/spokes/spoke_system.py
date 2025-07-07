@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Type
 
+from app.schema import User
 from app.services.ai.logger import AIAssistantLogger
 from app.services.ai.spokes.spoke_interface import BaseSpoke
 
@@ -131,9 +132,14 @@ class SpokeRegistry:
         self._spokes[spoke_name] = spoke_class
         self._spoke_configs[spoke_name] = config
 
-    def get_spoke_class(self, spoke_name: str) -> Optional[Type[BaseSpoke]]:
+    def get_spoke_class(
+        self,
+        spoke_name: str,
+        current_user: User,
+    ) -> Optional[Type[BaseSpoke]]:
         """スポーククラスを取得"""
-        return self._spokes.get(spoke_name)
+        cache_key = f"{spoke_name}_{current_user.id}"
+        return self._spokes.get(cache_key)
 
     def get_all_configs(self) -> Dict[str, SpokeConfig]:
         """すべてのスポーク設定を取得"""

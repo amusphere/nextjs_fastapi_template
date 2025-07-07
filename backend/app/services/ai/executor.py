@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from app.schema import User
 from sqlmodel import Session
 
 from .exceptions import ActionExecutionError
@@ -19,14 +20,18 @@ class ActionExecutor:
         self.spoke_manager = SpokeManager(session)
         self.logger = AIAssistantLogger("action_executor")
 
-    async def execute_action(self, action: NextAction) -> SpokeResponse:
+    async def execute_action(
+        self,
+        action: NextAction,
+        current_user: User,
+    ) -> SpokeResponse:
         """個別のアクションを実行"""
         # ログ記録
         self.logger.log_action_execution(next_action=action)
 
         try:
             # 動的スポークマネージャーを使用してアクションを実行
-            result = await self.spoke_manager.execute_action(action)
+            result = await self.spoke_manager.execute_action(action, current_user)
             return result
         except Exception as e:
             error = ActionExecutionError(f"Execution error: {str(e)}")
@@ -40,14 +45,18 @@ class ActionExecutor:
             )
             return SpokeResponse(success=False, error=str(error))
 
-    async def execute_actions(self, actions: List[NextAction]) -> List[SpokeResponse]:
+    async def execute_actions(
+        self,
+        actions: List[NextAction],
+        current_user: User,
+    ) -> List[SpokeResponse]:
         """複数のアクションを優先度順に実行"""
         # 優先度でソート（数値が小さいほど高優先度）
         sorted_actions = sorted(actions, key=lambda x: x.priority)
 
         results = []
         for action in sorted_actions:
-            result = await self.execute_action(action)
+            result = await self.execute_action(action, current_user)
             results.append(result)
 
             # 重要なエラーが発生した場合は実行を停止

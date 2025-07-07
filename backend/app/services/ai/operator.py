@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from typing import Optional
 from zoneinfo import ZoneInfo
 
 from app.utils.llm import llm_chat_completions_perse
@@ -18,7 +17,7 @@ class OperatorHub:
     def __init__(
         self,
         user_id: int,
-        session: Optional[Session] = None,
+        session: Session | None = None,
     ):
         self.user_id = user_id
         self.session = session
@@ -43,7 +42,9 @@ class OperatorHub:
 
             # そのスポークのアクションを追加
             for action in config.actions:
-                actions_list.append(f"- {action.action_type} : {action.description} : {action.parameters}")
+                actions_list.append(
+                    f"- {action.action_type} : {action.description} : {action.parameters}"
+                )
 
         return "\n".join(actions_list)
 
@@ -73,10 +74,7 @@ class OperatorHub:
 """
         return system_prompt
 
-    async def analyze_prompt(
-        self,
-        prompt: str,
-    ) -> OperatorResponse:
+    async def analyze_prompt(self, prompt: str) -> OperatorResponse:
         """プロンプトを解析してアクション計画を生成"""
 
         # 動的にシステムプロンプトを生成

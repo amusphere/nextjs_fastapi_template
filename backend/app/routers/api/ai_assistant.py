@@ -18,7 +18,9 @@ async def process_ai_request_endpoint(
     """AIアシスタントにリクエストを送信して処理結果を取得"""
     try:
         orchestrator = AIOrchestrator(user.id, session)
-        result = await orchestrator.process_request(request.prompt)
+        result = await orchestrator.process_request(
+            prompt=request.prompt, current_user=user
+        )
 
         return AIResponseModel(**result)
 

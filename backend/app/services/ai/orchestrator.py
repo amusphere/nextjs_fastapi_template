@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from app.schema import User
 from app.utils.llm import llm_chat_completions
 from sqlmodel import Session
 
@@ -22,6 +23,7 @@ class AIOrchestrator:
     async def process_request(
         self,
         prompt: str,
+        current_user: User,
     ) -> Dict[str, Any]:
         """ユーザーリクエストを処理して結果を返す
 
@@ -38,13 +40,13 @@ class AIOrchestrator:
         try:
             # Step 1: プロンプトを解析してアクション計画を取得
             operator_response: OperatorResponse = (
-                await self.operator_hub.analyze_prompt(prompt=prompt)
+                await self.operator_hub.analyze_prompt(prompt)
             )
 
             # Step 2: アクション計画を実行
             executor = ActionExecutor(self.session)
             execution_results: List[SpokeResponse] = await executor.execute_actions(
-                operator_response.actions
+                operator_response.actions, current_user
             )
 
             # Step 3: 実行結果をサマリー

@@ -4,8 +4,8 @@
 
 import json
 from abc import ABC
-from typing import Optional
 
+from app.schema import User
 from app.services.ai.logger import AIAssistantLogger
 from app.services.ai.models import NextAction, SpokeResponse
 from app.utils.llm import llm_chat_completions
@@ -27,8 +27,13 @@ class BaseSpoke(ABC):
     execute_action() によって呼び出されます。
     """
 
-    def __init__(self, session: Optional[Session] = None):
+    def __init__(
+        self,
+        session: Session | None = None,
+        current_user: User | None = None,
+    ):
         self.session = session
+        self.current_user = current_user
         self.logger = AIAssistantLogger(self.__class__.__name__)
 
     async def execute_action(
