@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 from zoneinfo import ZoneInfo
 
+from app.schema import User
 from app.services.ai.models import SpokeResponse
 from app.services.ai.spokes.spoke_interface import BaseSpoke
 from app.services.google_oauth import GoogleOauthService
@@ -13,8 +14,12 @@ from sqlmodel import Session
 class GoogleCalendarSpoke(BaseSpoke):
     """Google Calendar操作を提供するスポーク"""
 
-    def __init__(self, session: Optional[Session] = None):
-        super().__init__(session=session)
+    def __init__(
+        self,
+        session: Optional[Session] = None,
+        current_user: Optional[User] = None,
+    ):
+        super().__init__(session=session, current_user=current_user)
         try:
             self.oauth_service = GoogleOauthService(session)
         except ValueError as e:
@@ -50,7 +55,7 @@ class GoogleCalendarSpoke(BaseSpoke):
             max_results = parameters.get("max_results", 100)
 
             # Google Calendar APIサービスを取得
-            service = self._get_calendar_service(parameters["user_id"])
+            service = self._get_calendar_service(self.current_user.id)
 
             # イベントを取得
             events_result = (
@@ -123,7 +128,7 @@ class GoogleCalendarSpoke(BaseSpoke):
     ) -> SpokeResponse:
         """カレンダーイベント作成アクション"""
         try:
-            service = self._get_calendar_service(parameters["user_id"])
+            service = self._get_calendar_service(self.current_user.id)
             calendar_id = parameters.get("calendar_id", "primary")
 
             # イベントデータを構築
@@ -195,7 +200,7 @@ class GoogleCalendarSpoke(BaseSpoke):
     ) -> SpokeResponse:
         """カレンダーイベント更新アクション"""
         try:
-            service = self._get_calendar_service(parameters["user_id"])
+            service = self._get_calendar_service(self.current_user.id)
             calendar_id = parameters.get("calendar_id", "primary")
             event_id = parameters["event_id"]
 
@@ -275,7 +280,7 @@ class GoogleCalendarSpoke(BaseSpoke):
     ) -> SpokeResponse:
         """カレンダーイベント削除アクション"""
         try:
-            service = self._get_calendar_service(parameters["user_id"])
+            service = self._get_calendar_service(self.current_user.id)
             calendar_id = parameters.get("calendar_id", "primary")
             event_id = parameters["event_id"]
 
@@ -305,10 +310,10 @@ class GoogleCalendarSpoke(BaseSpoke):
         except Exception as e:
             return SpokeResponse(success=False, error=f"Unexpected error: {str(e)}")
 
-    async def action_list_calendars(self, parameters: Dict[str, Any]) -> SpokeResponse:
+    async def action_list_calendars(self, _: Dict[str, Any]) -> SpokeResponse:
         """カレンダーリスト取得アクション（新しいアクションの例）"""
         try:
-            service = self._get_calendar_service(parameters["user_id"])
+            service = self._get_calendar_service(self.current_user.id)
 
             # カレンダーリストを取得
             calendars_result = service.calendarList().list().execute()
