@@ -22,15 +22,10 @@ services:
       FRONTEND_URL: http://localhost:3000
     volumes:
         - ./backend:/app
-        # Docker socket マウント（MCP Gmail通信用）
-        - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8000:8000"
     depends_on:
       - db
-      - mcp_gmail
-    # docker groupの権限を追加
-    user: "0"  # root権限でコンテナを起動
 
   frontend:
     build:
@@ -46,23 +41,6 @@ services:
       - "3000:3000"
     depends_on:
       - backend
-
-  mcp_gmail:
-    image: buryhuang/mcp-headless-gmail:latest
-    container_name: mcp_gmail
-    # ── MCP は STDIO ベース ──
-    stdin_open: true      # -i と同等
-    tty: true             # --tty を付けて制御文字を維持
-    restart: unless-stopped
-    # ネットワーク経由でのMCP通信のためのポート露出（テスト用）
-    ports:
-      - "9001:9001"
-    # MCP サーバーをHTTP経由でも利用可能にする環境変数
-    environment:
-      - MCP_HTTP_PORT=9001
-    # バックエンドと同じネットワーク
-    networks:
-      - default
 
 volumes:
   database: {}
