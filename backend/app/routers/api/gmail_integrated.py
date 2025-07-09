@@ -205,30 +205,3 @@ async def mark_email_as_unread(
     except GmailServiceError as e:
         logger.error(f"未読マークエラー: {e}")
         raise HTTPException(status_code=500, detail=f"未読マークエラー: {e}")
-
-
-# パフォーマンス比較エンドポイント
-@router.get("/performance-comparison")
-async def performance_comparison():
-    """統合型 vs MCP型のパフォーマンス比較情報"""
-    return {
-        "current_implementation": "integrated_gmail_api",
-        "benefits": {
-            "latency_reduction": "95%",
-            "container_reduction": "66%",
-            "code_complexity": "50% simpler",
-            "debugging_efficiency": "100% improvement",
-            "feature_coverage": "100% Gmail API features",
-        },
-        "architecture": {
-            "old": "Backend → HTTP Bridge → STDIO → MCP Gmail Container",
-            "new": "Backend → Direct Gmail API",
-        },
-        "operational_improvements": [
-            "Single container deployment",
-            "Unified logging and monitoring",
-            "Direct error handling",
-            "No network overhead",
-            "Full Gmail API access",
-        ],
-    }
