@@ -200,8 +200,9 @@ python -m pytest tests/routers/api/test_chat.py -v
 # 特定のテストクラス
 python -m pytest tests/routers/api/test_auth.py::TestEmailPasswordAuth -v
 
-# カバレッジレポート生成
-python -m pytest tests/routers/api/ --cov=app --cov-report=html
+# カバレッジについて
+# 本プロジェクトではテストのカバレッジ収集は行いません（CI も含む）。
+# 参考としてのコマンド例は削除しました。
 
 # 詳細出力（デバッグ用）
 python -m pytest tests/routers/api/ -v -s
