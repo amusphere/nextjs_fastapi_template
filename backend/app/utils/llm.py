@@ -2,7 +2,7 @@ import os
 
 import openai
 
-DEFAULT_MODEL = "gpt-4o"
+DEFAULT_MODEL = "gpt-5-nano"
 
 
 def get_client() -> openai.OpenAI:
@@ -12,15 +12,45 @@ def get_client() -> openai.OpenAI:
     return openai.OpenAI(api_key=api_key)
 
 
-def chat_completion(
+def generate_response(
     messages: list[dict[str, str]],
     model: str = DEFAULT_MODEL,
-    temperature: float = 0.7,
 ) -> str:
+    """Responses API でのテキスト生成。
+
+    - 引数の messages は {role, content} のリスト（従来の Chat Completions と同形）
+    - Responses API の input にマッピングして呼び出します
+    """
     client = get_client()
-    response = client.chat.completions.create(
+
+    # Chat Completions 互換の messages を Responses API の input 形式へ変換
+    input_items = [
+        {"role": m.get("role", "user"), "content": m.get("content", "")}
+        for m in messages
+    ]
+
+    # 一部モデルでは temperature が未対応のため送信しない
+    resp = client.responses.create(
         model=model,
-        messages=messages,
-        temperature=temperature,
+        input=input_items,
     )
-    return response.choices[0].message.content.strip()
+
+    # 可能なら output_text を優先的に使用
+    text = getattr(resp, "output_text", None)
+    if isinstance(text, str) and text.strip():
+        return text.strip()
+
+    # フォールバック（SDK 構造の差異に備える）
+    try:
+        outputs = getattr(resp, "output", []) or []
+        if outputs:
+            contents = getattr(outputs[0], "content", []) or []
+            for c in contents:
+                t = getattr(getattr(c, "text", None), "value", None)
+                if t:
+                    return t.strip()
+    except Exception:
+        pass
+
+    # 最終フォールバック
+    return ""

@@ -1,4 +1,4 @@
-from app.utils.llm import chat_completion
+from app.utils.llm import generate_response
 
 
 async def send_chat(prompt: str) -> str:
@@ -9,8 +9,8 @@ async def send_chat(prompt: str) -> str:
         }
     ]
     try:
-        response = chat_completion(messages=messages)
+        response = generate_response(messages=messages)
         return response
     except Exception as e:
-        print(f"Error during chat completion: {e}")
+        print(f"Error during response generation: {e}")
         return "An error occurred while processing your request."
