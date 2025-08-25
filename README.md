@@ -1,5 +1,7 @@
 # Next.js + FastAPI Template
 
+[![CI](https://github.com/amusphere/nextjs_fastapi_template/actions/workflows/ci.yml/badge.svg)](https://github.com/amusphere/nextjs_fastapi_template/actions/workflows/ci.yml)
+
 モダンなフロントエンド（Next.js）と高速なバックエンド（FastAPI）で構成されたテンプレートです。開発体験・パフォーマンス・拡張性を重視したスタータープロジェクトとして利用できます。
 
 ## 概要
