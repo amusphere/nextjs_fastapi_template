@@ -1,87 +1,59 @@
-# Contributor Guide
+# Repository Guidelines
 
-This repository contains both the frontend and backend. Each directory is independent, allowing for simultaneous development of both frontend and backend.
+Concise, practical rules for contributing to this monorepo. Keep changes scoped to either `backend/` (FastAPI) or `frontend/` (Next.js) unless the feature requires cross-cutting updates.
 
-## Directory Structure
+## 言語ポリシー / Language Policy
 
-Refer to the `README.md` at the root for the basic directory structure. Generally, you will be modifying files within the `Backend/` and `Frontend/` directories, as outlined below.
+- 既定の対応言語は日本語です。特段の指定がない限り、エージェントの応答、PR/Issue の説明、README/ドキュメントは日本語で記述してください。
+- コードの識別子（ファイル名・変数名・関数名・クラス名）は英語を維持します。コメントや Docstring は日本語で構いません。
+- 文体は簡潔・具体的・丁寧を心がけ、不要な冗長表現は避けてください。
 
-### Backend
+## ドキュメント構成 / Documentation
 
-The backend is based on FastAPI and is structured in the following layers:
+- ルートの `README.md`: 概要と環境構築のみ（簡潔）
+- 詳細は `docs/` 配下に追加・更新します。
+  - `docs/architecture.md`: 技術スタック・ディレクトリ構成
+  - `docs/backend.md`: API 開発フロー、マイグレーション
+  - `docs/frontend.md`: フロントエンド構成とページ作成
+  - `docs/docker.md`: Docker 実行/運用
+  - `docs/environment.md`: 環境変数
+  - `docs/testing.md`: テスト方針
+  - `docs/contributing.md`: コントリビュート規約（ブランチ/コミット/PR）
 
-- `routers/`: Defines API routing.
-- `models/`: Defines request/response schemas.
-- `repositories/`: Handles data access.
-- `services/`: Contains business logic.
-- `utils/`: Utility functions.
+## Project Structure & Module Organization
 
-## Frontend
+- Root: `backend/`, `frontend/`, `docker-compose.yml`, `README.md`.
+- Backend (`backend/`): FastAPI app. Key dirs: `app/routers`, `app/models`, `app/repositories`, `app/services`, `app/utils`, `app/migrations`; tests in `backend/tests/`. Entry: `backend/main.py`.
+- Frontend (`frontend/`): Next.js (App Router). Key dirs: `app/`, `components/components/{commons,forms,ui}`, `components/hooks`, `components/lib`, `components/pages`, `types/`, `utils/`.
+- Do not modify `components/components/ui/` or `components/lib/` (generated shadcn/ui).
 
-The frontend is based on Next.js and is structured in the following layers:
+## Build, Test, and Development Commands
 
-- `app/api/`: Defines API routing.
-- `app/(authed)/`: Defines routes that require authentication.
-- `app/auth/`: Handles authentication-related routes.
-- `components/components/commons`: Common components.
-- `components/components/forms`: Form components.
-- `components/components/ui`: shadcn/ui components (do not modify).
-- `components/hooks/`: Custom hooks.
-- `components/lib/`: shadcn/ui library functions (do not modify).
-- `components/pages/`: Page components.
-- `types/`: TypeScript type definitions.
-- `utils/`: Utility functions.
+- Backend — dev server: `uv run fastapi dev --host 0.0.0.0 --port 8000`
+- Backend — DB migrate: `uv run alembic upgrade head`
+- Backend — tests: `uv run pytest -q`
+- Frontend — dev: `npm run dev` (from `frontend/`)
+- Frontend — build: `npm run build`; start: `npm run start`
+- Frontend — lint: `npm run lint`
 
-## Lint and Format
+## Coding Style & Naming Conventions
 
-### Backend
+- Python: 4-space indent, type hints, Pydantic models in `app/models`. Keep routers thin; put business logic in `app/services`. Files: `snake_case.py`; functions/vars: `snake_case`; classes: `PascalCase`.
+- TypeScript/React: Use TS. Components: `PascalCase` files (e.g., `UserCard.tsx`); hooks: `useX` in `components/hooks`. Route segment files follow Next.js conventions. Prefer named exports.
+- Formatting: Backend uses Black; run locally with `black backend`. Frontend uses ESLint (`npm run lint`).
 
-- Use `black` for code formatting.
+## Testing Guidelines
 
-### Frontend
+- Backend: Pytest with fixtures in `backend/tests/fixtures`. Name tests `test_*.py`. Run `uv run pytest -q`. Aim to cover routers, services, and auth flows.
+- Frontend: No test runner scaffolded. If adding tests, prefer React Testing Library and keep tests beside components or under `__tests__/`.
 
-- Run `npm run lint` to execute linting.
+## Commit & Pull Request Guidelines
 
-## Testing
+- Branches: English, hyphen-separated, include feature (e.g., `feat-user-login`).
+- Commits: Imperative mood; use conventional types where helpful (e.g., `feat:`, `fix:`, `chore:`).
+- PRs: Clear description, linked issues, steps to test, and screenshots/GIFs for UI changes. Note any schema or ENV changes.
 
-### Backend
+## Security & Configuration
 
-Start the server and test endpoints with the following command:
-
-```bash
-uv run fastapi dev --host 0.0.0.0 --port 8000
-```
-
-If necessary, run database migrations:
-
-```bash
-uv run alembic upgrade head
-```
-
-### Frontend
-
-Start the server and test the UI with the following command. Make sure the backend server is also running.
-
-```bash
-npm run dev
-```
-
-Also, verify that the build passes with the following command:
-
-```bash
-npm run build
-```
-
-## UI
-- Ensure responsive design implementation.
-- Use shadcn/ui for UI components.
-- Do not modify the files in `components/components/ui/` or `components/lib/`.
-- Use the components in `components/components/commons/` and `components/components/forms/` for custom components.
-- Use the components in `components/components/pages/` for page components.
-
-## Pull Requests
-- Branch names must be in English and include the feature name.
-- Use hyphens (-) as separators between words.
-
-## etc.
-- If instructions are given in Japanese, respond in Japanese.
+- Environment: copy `.env.sample` to `.env` in both `backend/` and `frontend/`. Do not commit secrets. Update samples when adding variables.
+- CORS/URLs: keep allowed origins and API URLs configurable via ENV.

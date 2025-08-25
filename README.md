@@ -1,154 +1,65 @@
-# NextJS FastAPI Template
-This is a template for a web application using Next.js for the frontend and FastAPI for the backend. It is designed to be a starting point for building modern web applications with a focus on performance, scalability, and developer experience.
+# Next.js + FastAPI Template
 
-## Features
+モダンなフロントエンド（Next.js）と高速なバックエンド（FastAPI）で構成されたテンプレートです。開発体験・パフォーマンス・拡張性を重視したスタータープロジェクトとして利用できます。
 
-### Frontend
-- [Next.js](https://nextjs.org/) for server-side rendering and static site generation. Uses the App Router.
-- TypeScript support
-- [Tailwindcss](https://tailwindcss.com/) for styling
-- [shadcn/ui](https://ui.shadcn.com/) - a set of accessible and customizable UI components
+## 概要
 
-### Backend
-- [FastAPI](https://fastapi.tiangolo.com/) for building APIs
-- [SQLModel](https://sqlmodel.tiangolo.com/) for ORM
-- [Alembic](https://alembic.sqlalchemy.org/) for database migrations
+- フロントエンド: Next.js（App Router）, TypeScript, Tailwind CSS, shadcn/ui
+- バックエンド: FastAPI, SQLModel, Alembic
+- 認証: Clerk
+- コンテナ: Docker / Docker Compose（任意）
 
-### Authentication
-- [Clerk](https://clerk.dev/) for user authentication and management
+詳細な構成や開発手順は `docs/` 以下に分割して掲載しています。まずは環境構築手順に従ってローカルで起動してください。
 
-### Deployment
-- Docker for containerization
-- Docker Compose for local development
+## 環境構築（ローカル）
 
+### 前提条件
+- Node.js 20 以上（npm 同梱）
+- Python 3.11+ と `uv`
+- （任意）Docker / Docker Compose
 
-## Getting Started
-
-### Environment Variables
-Create a `.env` file in both the `frontend` and `backend` directories. Copy the contents of `.env.example` to `.env` and fill in the required values.
-
-- Frontend
-  - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  - CLERK_SECRET_KEY
-- Backend
-  - CLERK_SECRET_KEY
-
-### Run on Docker
-Command to run the application using Docker Compose:
+### 環境変数の作成
+`backend/` と `frontend/` の両方で `.env.sample` を `.env` にコピーし、必要値を設定します。
 
 ```bash
-# Build
-docker compose build
+cp backend/.env.sample backend/.env
+cp frontend/.env.sample frontend/.env
+```
 
-# Run
+### 起動手順（ローカル実行）
+- バックエンド（FastAPI 開発サーバ）
+  - ルートで実行: `uv run fastapi dev --host 0.0.0.0 --port 8000`
+  - DB マイグレーション: `uv run alembic upgrade head`
+- フロントエンド（Next.js）
+  - `cd frontend && npm install`
+  - `npm run dev`
+
+表示確認:
+- Web: http://localhost:3000
+- API: http://localhost:8000/docs
+
+## Docker で実行（任意）
+
+```bash
+docker compose build
 docker compose up
 ```
 
-### Database Migrations
-To run database migrations, use the following command:
+DB マイグレーション:
 
 ```bash
 docker compose run --rm backend alembic upgrade head
 ```
 
-### Checking in Browser
-- Web: [http://localhost:3000](http://localhost:3000)
-- API: [http://localhost:8000/docs](http://localhost:8000/docs)
+## 追加ドキュメント（docs/）
 
-### Optional: Rename App Name
-If you want to rename the app name, change env variables in the frontend `.env` file.
+- docs/README.md: 目次とガイドへのリンク
+- docs/architecture.md: 技術スタック・ディレクトリ構成
+- docs/backend.md: ルータ/サービス/リポジトリの役割、API作成手順、マイグレーション
+- docs/frontend.md: ページ・コンポーネント構成、開発手順
+- docs/docker.md: Docker 運用・コマンド
+- docs/environment.md: 必要な環境変数一覧
+- docs/testing.md: テストの方針と実行方法
+- docs/contributing.md: コントリビュート規約（ブランチ/コミット/PR）
 
-```env
-APP_NAME="Your App Name"
-```
-
-## Directory Structure
-
-Backend:
-```
-Backend/
-├── app/                   # Application source code
-│   ├── migrations/        # Database migrations
-│   ├── models/            # Data model definitions (Request/Response schemas by Pydantic)
-│   ├── repositories/      # Database access layer
-│   ├── routers/           # API route definitions
-│   │   └── routers.py     # Set routing table
-│   ├── services/          # Business logic layer
-│   ├── utils/             # General utility functions
-│   ├── database.py        # Database connection and session management
-│   └── schema.py          # Database schema definitions by SQLModel
-├── .env.sample            # Sample environment variables
-├── alembic.ini            # Alembic configuration file
-├── Dockerfile             # Dockerfile for backend
-├── main.py                # Entry point for FastAPI application
-└── pyproject.toml         # Environment dependencies by uv
-```
-
-Frontend:
-```
-Frontend/
-├── app/                   # Next.js application source code
-│   ├── (authed)/          # Authed routes
-│   │   └── layout.tsx     # Layout component for authed routes
-│   ├── api/               # API route definitions
-│   ├── auth/              # Authentication related routes
-│   ├── global.css         # Global CSS styles
-│   ├── layout.tsx         # Main layout component
-│   └── page.tsx           # Main entry point for Next.js application
-├── components/            # Reusable components
-│   ├── components/
-│   │   ├── commons/       # Common components
-│   │   ├── forms/         # Form components
-│   │   └── ui/            # shadcn/ui components (Do not modify)
-│   ├── hooks/             # Custom hooks (Create by shadcn/ui)
-│   ├── lib/               # Library functions (Create by shadcn/ui)
-│   └── pages/             # Page components
-├── types/                 # TypeScript types
-├── utils/                 # Utility functions
-├── .env.sample            # Sample environment variables
-├── Dockerfile             # Dockerfile for frontend
-├── package.json           # Node.js dependencies
-└── next.config.js         # Next.js configuration file
-```
-
-## Development Flow
-
-### Create endpoint (Backend)
-1. Create a new file in the `routers/` directory for the new endpoint.
-2. Define the endpoint in the `routers/routers.py` file.
-
-#### Layer Structure
-- **Routers**: API route definitions. Define the API routes here.
-- **Models**: Define the request and response schemas using Pydantic.
-- **Services**: Business logic layer. Define the business logic here. Calling from the router layer.
-- **Repositories**: Database access layer. Define the database access methods here. Calling from the service layer or router layer.
-- **Utils**: General utility functions. Define the utility functions here.
-
-#### Database Migrations
-1. Add a new table or modify an existing table in the `schema.py` file.
-2. Create a new migration file using Alembic:
-   ```bash
-   docker compose run --rm backend alembic revision --autogenerate -m "migration_name"
-   ```
-3. Check the generated migration file in the `migrations/versions/` directory and make any necessary adjustments.
-4. Apply the migration:
-   ```bash
-   docker compose run --rm backend alembic upgrade head
-   ```
-5. If you want to downgrade the migration, use the following command:
-   ```bash
-   docker compose run --rm backend alembic downgrade -1
-   ```
-
-### Create new page (Frontend)
-1. Create a new file in the `app/` directory for the new page.
-  - If new page is authed, create in the `(authed)/` directory.
-
-#### Layer Structure
-- **app/**: Next.js application source code. Define the pages and components here.
-- **components/**: Reusable components. Define the reusable components here.
-- **components/hooks/**: Custom hooks. Define the custom hooks here.
-- **components/lib/**: Library functions. Define the library functions here.
-- **components/pages/**: Page components. Define the page components here.
-- **types/**: TypeScript types. Define the TypeScript types here.
-- **utils/**: Utility functions. Define the utility functions here.
+より詳細なガイドは各ドキュメントを参照してください。
