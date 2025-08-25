@@ -29,7 +29,6 @@ def generate_response(
         for m in messages
     ]
 
-    # 一部モデルでは temperature が未対応のため送信しない
     resp = client.responses.create(
         model=model,
         input=input_items,
