@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from app.schema import PasswordResetToken
 from sqlmodel import Session, select
@@ -25,7 +24,7 @@ def create_token(
 def get_active_token_by_hash(
     session: Session,
     token_hash: str,
-) -> Optional[PasswordResetToken]:
+) -> PasswordResetToken | None:
     stmt = select(PasswordResetToken).where(
         PasswordResetToken.token_hash == token_hash,
         PasswordResetToken.expires_at >= datetime.now().timestamp(),

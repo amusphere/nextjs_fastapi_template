@@ -12,9 +12,45 @@ dependencies = [
     "openai>=1.82.1",
     "passlib[bcrypt]>=1.7.4",
     "psycopg2-binary>=2.9.10",
+    "pytest>=8.4.0",
     "python-jose>=3.4.0",
     "python-multipart>=0.0.20",
+    "ruff>=0.12.10",
     "setuptools>=79.0.0",
     "sqlmodel>=0.0.24",
     "uvicorn>=0.34.0",
 ]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["app"]
+extend-exclude = [
+    "app/migrations",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "W",  # pycodestyle warnings
+    "I",  # isort (import order)
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+    "ARG",# unused args
+    "C4", # flake8-comprehensions
+    "SIM",# flake8-simplify
+    "RUF" # ruff-specific
+]
+ignore = [
+    "B008",   # FastAPI の Depends/Form デフォルト引数に対する誤検知を除外
+    "E501",   # 長行は許容（可読性優先）
+    "RUF002", # 日本語ドキュメント/コメントの全角記号を許容
+    "RUF003", # 同上（コメント）
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"

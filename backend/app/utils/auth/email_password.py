@@ -4,7 +4,6 @@ import sys
 from datetime import datetime, timedelta
 
 import jwt
-from app.database import engine
 from app.models.auth import UserCreateModel
 from app.repositories.user import get_user_br_column
 from app.schema import User
@@ -17,6 +16,15 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+# Fallback for local/dev/test environments where SECRET_KEY is not provided.
+if not SECRET_KEY:
+    # Allow alternative var name if provided
+    SECRET_KEY = os.getenv("JWT_SECRET")
+if not SECRET_KEY:
+    SECRET_KEY = "insecure-dev-secret"
+    logger.warning(
+        "SECRET_KEY is not set; using insecure default for dev/test. Set SECRET_KEY in env."
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -78,10 +86,11 @@ async def get_auth_sub(token: str = Depends(oauth2_scheme)) -> str | None:
 
 
 async def get_authed_user(sub: str) -> User | None:
-    session = Session(engine)
-    user = get_user_br_column(session, sub, "email")
-    session.close()
-    return user
+    from app.utils.database_utils import get_db_session
+
+    with get_db_session() as session:
+        user = get_user_br_column(session, sub, "email")
+        return user
 
 
 def create_new_user(data: UserCreateModel, session: Session) -> str | None:
