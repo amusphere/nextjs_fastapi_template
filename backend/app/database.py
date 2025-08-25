@@ -1,7 +1,7 @@
 """Database configuration and session management."""
 
+from collections.abc import Generator
 from os import getenv
-from typing import Generator
 
 from app.utils.test_database import get_test_engine, get_test_session
 from dotenv import load_dotenv

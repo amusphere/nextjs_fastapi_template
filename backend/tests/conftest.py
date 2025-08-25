@@ -14,8 +14,8 @@ from main import app
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import all fixtures from the fixtures directory
-from tests.fixtures.database import *  # noqa: F401, F403
-from tests.fixtures.users import *  # noqa: F401, F403
+from tests.fixtures.database import *  # noqa: F403
+from tests.fixtures.users import *  # noqa: F403
 
 
 @pytest.fixture

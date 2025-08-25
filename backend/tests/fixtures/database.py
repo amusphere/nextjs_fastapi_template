@@ -1,10 +1,10 @@
 """データベース関連のfixture"""
 
 import pytest
-from sqlmodel import Session, SQLModel, create_engine
 
 # テーブル定義をインポートしてメタデータに登録
-from app.schema import User, PasswordResetToken  # noqa: F401
+from app.schema import PasswordResetToken, User  # noqa: F401
+from sqlmodel import Session, SQLModel, create_engine
 
 
 # Test database engine (using SQLite in memory for tests)

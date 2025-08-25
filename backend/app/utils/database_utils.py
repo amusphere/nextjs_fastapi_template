@@ -1,11 +1,10 @@
 """データベースセッション管理のユーティリティ関数"""
 
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
-
-from sqlmodel import Session
 
 from app.database import get_session
+from sqlmodel import Session
 
 
 @contextmanager

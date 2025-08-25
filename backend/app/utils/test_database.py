@@ -8,14 +8,13 @@ affecting production systems.
 """
 
 import sys
-from typing import Optional
 
 from sqlalchemy import Engine
 from sqlmodel import Session
 
 # テスト用のエンジンとセッションを保存するグローバル変数
-_test_engine: Optional[Engine] = None
-_test_session: Optional[Session] = None
+_test_engine: Engine | None = None
+_test_session: Session | None = None
 
 
 def is_testing() -> bool:
@@ -62,7 +61,7 @@ def clear_test_config() -> None:
     _test_session = None
 
 
-def get_test_engine() -> Optional[Engine]:
+def get_test_engine() -> Engine | None:
     """
     Get the test engine if in testing environment.
 
@@ -72,7 +71,7 @@ def get_test_engine() -> Optional[Engine]:
     return _test_engine if is_testing() else None
 
 
-def get_test_session() -> Optional[Session]:
+def get_test_session() -> Session | None:
     """
     Get the test session if in testing environment.
 
