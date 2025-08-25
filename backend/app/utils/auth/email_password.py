@@ -16,6 +16,15 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+# Fallback for local/dev/test environments where SECRET_KEY is not provided.
+if not SECRET_KEY:
+    # Allow alternative var name if provided
+    SECRET_KEY = os.getenv("JWT_SECRET")
+if not SECRET_KEY:
+    SECRET_KEY = "insecure-dev-secret"
+    logger.warning(
+        "SECRET_KEY is not set; using insecure default for dev/test. Set SECRET_KEY in env."
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
