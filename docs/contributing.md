@@ -23,7 +23,10 @@
 
 - Python: 4 スペース、型ヒント、Pydantic モデルは `app/models`、ビジネスロジックは `app/services`
 - TypeScript/React: TS 使用、コンポーネントは `PascalCase`、フックは `useX` 命名、App Router 準拠
-- フォーマット: Backend は Black、Frontend は ESLint
+- フォーマット/Lint:
+  - Backend は Ruff による lint とフォーマットを CI で検証（`ruff check`, `ruff format --check`）。
+  - ローカルで Black を使用しても構いませんが、CI の Ruff チェックを通過すること。
+  - Frontend は ESLint
 
 ## テスト
 
@@ -35,4 +38,3 @@
 - ルート `README.md`: 概要とセットアップ
 - 詳細は `docs/` 配下に追加（本ファイルを含む）
 - 言語ポリシー: 既定は日本語。識別子は英語、コメント/Docstring は日本語可
-
