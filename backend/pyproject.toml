@@ -42,7 +42,12 @@ select = [
     "SIM",# flake8-simplify
     "RUF" # ruff-specific
 ]
-ignore = []
+ignore = [
+    "B008",   # FastAPI の Depends/Form デフォルト引数に対する誤検知を除外
+    "E501",   # 長行は許容（可読性優先）
+    "RUF002", # 日本語ドキュメント/コメントの全角記号を許容
+    "RUF003", # 同上（コメント）
+]
 
 [tool.ruff.format]
 quote-style = "double"
