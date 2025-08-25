@@ -15,7 +15,9 @@ class TestUsersEndpoints:
         assert response.status_code == 401
         assert response.json() == {"detail": "Not authenticated"}
 
-    def test_get_current_user_authenticated(self, authenticated_client, authenticated_user):
+    def test_get_current_user_authenticated(
+        self, authenticated_client, authenticated_user
+    ):
         """認証済みユーザーがプロフィールを取得できることをテスト"""
         url = f"{self.BASE_URL}/me"
         response = authenticated_client.get(url)
@@ -25,16 +27,15 @@ class TestUsersEndpoints:
         assert user_data["name"] == authenticated_user.name
         assert user_data["uuid"] == str(authenticated_user.uuid)
 
-    def test_update_current_user_authenticated(self, authenticated_client, authenticated_user):
+    def test_update_current_user_authenticated(
+        self, authenticated_client, authenticated_user
+    ):
         """認証済みユーザーがプロフィールを更新できることをテスト"""
         update_data = {
             "name": "Updated Name",
         }
 
-        response = authenticated_client.put(
-            f"{self.BASE_URL}/me",
-            json=update_data
-        )
+        response = authenticated_client.put(f"{self.BASE_URL}/me", json=update_data)
 
         assert response.status_code == 200
         user_data = response.json()
@@ -47,10 +48,7 @@ class TestUsersEndpoints:
             "name": "Should Not Update",
         }
 
-        response = test_client.put(
-            f"{self.BASE_URL}/me",
-            json=update_data
-        )
+        response = test_client.put(f"{self.BASE_URL}/me", json=update_data)
 
         assert response.status_code == 401
 
@@ -61,10 +59,7 @@ class TestUsersEndpoints:
             "name": 123,  # 文字列であるべき
         }
 
-        response = authenticated_client.put(
-            f"{self.BASE_URL}/me",
-            json=update_data
-        )
+        response = authenticated_client.put(f"{self.BASE_URL}/me", json=update_data)
 
         assert response.status_code == 422
 
