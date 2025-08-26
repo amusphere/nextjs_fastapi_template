@@ -3,24 +3,65 @@
 import { Button } from "@/components/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/components/ui/card";
 import { Input } from "@/components/components/ui/input";
-import { ScrollArea } from "@/components/components/ui/scroll-area";
 import { Separator } from "@/components/components/ui/separator";
 import { ChatMessage } from "@/types/Chat";
-import { Bot, MessageCircle, Send, User } from "lucide-react";
+import { Bot, MessageCircle, Send, Trash2, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const DRAFT_KEY = "chat:inputDraft";
 
-  // Auto-scroll when a message is added
+  // メッセージ追加時にボトムへスクロール
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    try {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    } catch {
+      // noop
     }
   }, [messages]);
+
+  // 初回マウント時にサーバの履歴を取得
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/chat/history?limit=50", { method: "GET" });
+        if (res.ok) {
+          const data: { total: number; messages: { role: ChatMessage["role"]; content: string }[] } = await res.json();
+          const mapped: ChatMessage[] = (data.messages || []).map((m) => ({ role: m.role, content: m.content }));
+          setMessages(mapped);
+        }
+      } catch {
+        // サーバ取得失敗時は何もしない（空表示）
+      }
+    };
+    load();
+  }, []);
+
+  // 入力ドラフトの復元
+  useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(DRAFT_KEY) : null;
+      if (raw) setInput(raw);
+    } catch {
+      // noop
+    }
+  }, []);
+
+  // 入力ドラフトの保存
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        if (input) window.localStorage.setItem(DRAFT_KEY, input);
+        else window.localStorage.removeItem(DRAFT_KEY);
+      }
+    } catch {
+      // noop
+    }
+  }, [input]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -28,6 +69,7 @@ export default function ChatPage() {
     const prompt = input;
     setMessages((msgs) => [...msgs, { role: "user", content: prompt }]);
     setInput("");
+    try { if (typeof window !== "undefined") window.localStorage.removeItem(DRAFT_KEY); } catch { }
     setIsLoading(true);
 
     try {
@@ -38,21 +80,12 @@ export default function ChatPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setMessages((msgs) => [
-          ...msgs,
-          { role: "assistant", content: data.response },
-        ]);
+        setMessages((msgs) => [...msgs, { role: "assistant", content: data.response }]);
       } else {
-        setMessages((msgs) => [
-          ...msgs,
-          { role: "assistant", content: data.message || "Error occurred" },
-        ]);
+        setMessages((msgs) => [...msgs, { role: "assistant", content: data.message || "Error occurred" }]);
       }
     } catch {
-      setMessages((msgs) => [
-        ...msgs,
-        { role: "assistant", content: "Connection error. Please try again." },
-      ]);
+      setMessages((msgs) => [...msgs, { role: "assistant", content: "Connection error. Please try again." }]);
     } finally {
       setIsLoading(false);
     }
@@ -66,13 +99,32 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col w-full min-h-full md:max-w-4xl md:mx-auto md:px-4 md:py-4">
-      <Card className="flex flex-col h-full md:h-[calc(100vh-8rem)]">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-center md:text-left">
-            <MessageCircle className="h-6 w-6" />
-            AI Chat Assistant
-          </CardTitle>
+    <div className="flex flex-col w-full h-full max-h-screen md:max-w-4xl md:mx-auto md:px-4 md:py-4">
+      <Card className="flex flex-col h-full max-h-full overflow-hidden">
+        <CardHeader className="pb-4 flex-shrink-0">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-center md:text-left">
+              <MessageCircle className="h-6 w-6" />
+              AI Chat Assistant
+            </CardTitle>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={async () => {
+                try {
+                  await fetch("/api/chat/history", { method: "DELETE" });
+                } catch {
+                  // noop
+                }
+                setMessages([]);
+                setInput("");
+                try { if (typeof window !== "undefined") window.localStorage.removeItem(DRAFT_KEY); } catch { }
+              }}
+              title="Reset chat history"
+            >
+              <Trash2 className="h-4 w-4 mr-1" /> Reset
+            </Button>
+          </div>
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               Start a conversation with our AI assistant
@@ -80,12 +132,12 @@ export default function ChatPage() {
           </div>
         </CardHeader>
 
-        <Separator />
+        <Separator className="flex-shrink-0" />
 
-        <CardContent className="flex-1 flex flex-col p-0">
+        <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">
           {/* Chat messages area */}
-          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-            <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 max-h-full">
+            <div className="space-y-4 min-h-full">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
@@ -138,8 +190,10 @@ export default function ChatPage() {
                   </div>
                 </div>
               )}
+              <div ref={bottomRef} />
+              <div ref={bottomRef} />
             </div>
-          </ScrollArea>
+          </div>
 
           <Separator />
 
