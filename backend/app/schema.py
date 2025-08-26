@@ -34,4 +34,22 @@ class PasswordResetToken(SQLModel, table=True):
     user: User = Relationship(back_populates="password_reset_tokens")
 
 
+class ChatMessage(SQLModel, table=True):
+    """チャット履歴の1メッセージ（ユーザ/アシスタント両方）。"""
+
+    __tablename__ = "chat_messages"
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = Field(default=None, primary_key=True)
+    created_at: float = Field(
+        default_factory=lambda: datetime.now().timestamp(), index=True
+    )
+
+    role: str = Field(index=True)  # "user" | "assistant"
+    content: str
+
+    user_id: int = Field(foreign_key="users.id", index=True)
+    user: User | None = Relationship()
+
+
 metadata = SQLModel.metadata
